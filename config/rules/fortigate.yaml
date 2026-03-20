@@ -1,0 +1,67 @@
+rules:
+  - id: FORTI-BF-001
+    name: FortiGate VPN Brute Force
+    description: Detects 10+ failed VPN login attempts from same source IP within 5 minutes
+    severity: high
+    type: threshold
+    tags: [brute_force, vpn, fortigate]
+    filter:
+      source_type: fortigate
+      action: login-failed
+      category: auth
+    condition:
+      threshold: 10
+      window: 5m
+      group_by: src_ip
+
+  - id: FORTI-BF-002
+    name: FortiGate Admin Login Failure
+    description: Detects 5+ failed admin login attempts within 3 minutes
+    severity: critical
+    type: threshold
+    tags: [brute_force, admin, fortigate]
+    filter:
+      source_type: fortigate
+      action: login-failed
+      field: subtype
+      value: system
+    condition:
+      threshold: 5
+      window: 3m
+      group_by: src_ip
+
+  - id: FORTI-SCAN-001
+    name: FortiGate Port Scan Detection
+    description: Detects 50+ denied connections from same source within 2 minutes
+    severity: medium
+    type: threshold
+    tags: [scanning, network, fortigate]
+    filter:
+      source_type: fortigate
+      action: deny
+      category: network
+    condition:
+      threshold: 50
+      window: 2m
+      group_by: src_ip
+
+  - id: FORTI-SEQ-001
+    name: FortiGate Brute Force Then Success
+    description: Detects VPN brute force followed by successful login from same IP
+    severity: critical
+    type: sequence
+    tags: [brute_force, credential_compromise, vpn]
+    filter:
+      source_type: fortigate
+    condition:
+      window: 10m
+      group_by: src_ip
+      steps:
+        - label: Multiple failed logins
+          filter:
+            action: login-failed
+            category: auth
+        - label: Successful login
+          filter:
+            action: login
+            category: auth

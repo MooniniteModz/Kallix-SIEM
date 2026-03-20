@@ -1,0 +1,90 @@
+rules:
+  - id: WIN-BF-001
+    name: Windows RDP Brute Force
+    description: Detects 15+ failed logon attempts (4625) from same source IP within 5 minutes
+    severity: high
+    type: threshold
+    tags: [brute_force, rdp, windows]
+    filter:
+      source_type: windows
+      action: login_failure
+      category: auth
+    condition:
+      threshold: 15
+      window: 5m
+      group_by: src_ip
+
+  - id: WIN-PRIV-001
+    name: Suspicious Account Creation
+    description: Detects new account creation (4720) - review for legitimacy
+    severity: medium
+    type: threshold
+    tags: [account_management, windows]
+    filter:
+      source_type: windows
+      action: account_created
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: WIN-PRIV-002
+    name: Group Membership Change
+    description: Detects user added to security group (4732)
+    severity: medium
+    type: threshold
+    tags: [privilege_escalation, windows]
+    filter:
+      source_type: windows
+      action: member_added_to_group
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: WIN-TAMPER-001
+    name: Audit Log Cleared
+    description: Detects Security audit log being cleared (1102) - potential evidence destruction
+    severity: critical
+    type: threshold
+    tags: [defense_evasion, log_tampering, windows]
+    filter:
+      source_type: windows
+      action: audit_log_cleared
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: source_host
+
+  - id: WIN-SVC-001
+    name: Suspicious Service Installation
+    description: Detects new service installed (7045) - review for persistence mechanisms
+    severity: high
+    type: threshold
+    tags: [persistence, service, windows]
+    filter:
+      source_type: windows
+      action: service_installed
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: source_host
+
+  - id: WIN-SEQ-001
+    name: Credential Abuse Chain
+    description: Detects explicit credential use (4648) followed by account creation (4720) within 10 minutes
+    severity: critical
+    type: sequence
+    tags: [credential_abuse, lateral_movement, windows]
+    filter:
+      source_type: windows
+    condition:
+      window: 10m
+      group_by: user
+      steps:
+        - label: Explicit credential use
+          filter:
+            action: explicit_credential_login
+        - label: Account creation
+          filter:
+            action: account_created

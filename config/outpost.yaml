@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────
+# Outpost SIEM Configuration
+# ─────────────────────────────────────────────
+
+# Syslog ingestion
+syslog:
+  bind_address: "0.0.0.0"
+  udp_port: 5514        # Use 514 in production (requires root or CAP_NET_BIND_SERVICE)
+  tcp_port: 5514
+  enable_udp: true
+  enable_tcp: true
+
+# Storage
+last:
+  data_dir: "./data"
+  retention_days: 90
+  batch_size: 1000
+  flush_interval_ms: 1000
+
+# REST API
+api:
+  bind_address: "0.0.0.0"
+  port: 8080
+
+# Parser configuration
+parsers:
+  # Parser order matters: more specific parsers first
+  - fortigate
+  - syslog    # catch-all, always last
+
+# Logging
+logging:
+  level: "info"          # trace, debug, info, warn, error, critical
+  file: ""               # empty = console only; set path for file logging
+
+# Worker threads
+workers:
+  parser_threads: 2

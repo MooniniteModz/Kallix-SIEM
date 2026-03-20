@@ -1,0 +1,41 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/outpost_lib.dir/src/api/server.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/api/server.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/common/event.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/common/event.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/common/logger.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/common/logger.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/common/utils.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/common/utils.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/ingestion/http_poller.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/ingestion/http_poller.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/ingestion/ring_buffer.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/ingestion/ring_buffer.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/ingestion/syslog_listener.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/ingestion/syslog_listener.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/parser/azure_parser.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/parser/azure_parser.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/parser/fortigate_parser.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/parser/fortigate_parser.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/parser/m365_parser.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/parser/m365_parser.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/parser/syslog_parser.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/parser/syslog_parser.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/parser/windows_parser.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/parser/windows_parser.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/rules/rule.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/rules/rule.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/rules/rule_engine.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/rules/rule_engine.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/storage/postgres_storage_engine.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/storage/postgres_storage_engine.cpp.o.d"
+  "CMakeFiles/outpost_lib.dir/src/storage/retention.cpp.o"
+  "CMakeFiles/outpost_lib.dir/src/storage/retention.cpp.o.d"
+  "liboutpost_lib.a"
+  "liboutpost_lib.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/outpost_lib.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

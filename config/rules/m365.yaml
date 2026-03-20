@@ -1,0 +1,85 @@
+rules:
+  - id: M365-TOKEN-001
+    name: M365 Token Hijacking Indicator
+    description: Detects 3+ logins from different IPs for same user within 10 minutes (session token reuse)
+    severity: critical
+    type: threshold
+    tags: [token_hijacking, session_compromise, m365]
+    filter:
+      source_type: m365
+      action: login_success
+      category: auth
+    condition:
+      threshold: 3
+      window: 10m
+      group_by: user
+
+  - id: M365-RULE-001
+    name: Suspicious Inbox Rule Created
+    description: Detects creation of inbox rules - commonly used to hide attacker activity
+    severity: high
+    type: threshold
+    tags: [persistence, email_manipulation, m365]
+    filter:
+      source_type: m365
+      action: inbox_rule_created
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: M365-ROLE-001
+    name: Entra ID Admin Role Assignment
+    description: Detects assignment of admin roles in Entra ID
+    severity: critical
+    type: threshold
+    tags: [privilege_escalation, entra_id, m365]
+    filter:
+      source_type: m365
+      action: role_assignment
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: M365-OAUTH-001
+    name: OAuth App Consent
+    description: Detects OAuth application consent grants - potential OAuth abuse
+    severity: high
+    type: threshold
+    tags: [oauth_abuse, app_consent, m365]
+    filter:
+      source_type: m365
+      action: app_consent
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: M365-PERM-001
+    name: Mailbox Permission Added
+    description: Detects mailbox delegation/permission added - attacker may be gaining persistent access
+    severity: high
+    type: threshold
+    tags: [persistence, mailbox_access, m365]
+    filter:
+      source_type: m365
+      action: mailbox_permission_added
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: M365-ANON-001
+    name: Anonymous Sharing Link Created
+    description: Detects creation of anonymous sharing links in SharePoint/OneDrive
+    severity: medium
+    type: threshold
+    tags: [data_exfiltration, sharing, m365]
+    filter:
+      source_type: m365
+      action: anonymous_link_created
+    condition:
+      threshold: 3
+      window: 5m
+      group_by: user

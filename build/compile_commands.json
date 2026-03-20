@@ -1,0 +1,398 @@
+[
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/common/event.cpp.o -c /home/moon/UPT-Outpost/src/common/event.cpp",
+  "file": "/home/moon/UPT-Outpost/src/common/event.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/common/event.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/common/logger.cpp.o -c /home/moon/UPT-Outpost/src/common/logger.cpp",
+  "file": "/home/moon/UPT-Outpost/src/common/logger.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/common/logger.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/common/utils.cpp.o -c /home/moon/UPT-Outpost/src/common/utils.cpp",
+  "file": "/home/moon/UPT-Outpost/src/common/utils.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/common/utils.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/ingestion/syslog_listener.cpp.o -c /home/moon/UPT-Outpost/src/ingestion/syslog_listener.cpp",
+  "file": "/home/moon/UPT-Outpost/src/ingestion/syslog_listener.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/ingestion/syslog_listener.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/ingestion/ring_buffer.cpp.o -c /home/moon/UPT-Outpost/src/ingestion/ring_buffer.cpp",
+  "file": "/home/moon/UPT-Outpost/src/ingestion/ring_buffer.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/ingestion/ring_buffer.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/ingestion/http_poller.cpp.o -c /home/moon/UPT-Outpost/src/ingestion/http_poller.cpp",
+  "file": "/home/moon/UPT-Outpost/src/ingestion/http_poller.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/ingestion/http_poller.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/parser/fortigate_parser.cpp.o -c /home/moon/UPT-Outpost/src/parser/fortigate_parser.cpp",
+  "file": "/home/moon/UPT-Outpost/src/parser/fortigate_parser.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/parser/fortigate_parser.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/parser/syslog_parser.cpp.o -c /home/moon/UPT-Outpost/src/parser/syslog_parser.cpp",
+  "file": "/home/moon/UPT-Outpost/src/parser/syslog_parser.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/parser/syslog_parser.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/parser/windows_parser.cpp.o -c /home/moon/UPT-Outpost/src/parser/windows_parser.cpp",
+  "file": "/home/moon/UPT-Outpost/src/parser/windows_parser.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/parser/windows_parser.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/parser/m365_parser.cpp.o -c /home/moon/UPT-Outpost/src/parser/m365_parser.cpp",
+  "file": "/home/moon/UPT-Outpost/src/parser/m365_parser.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/parser/m365_parser.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/parser/azure_parser.cpp.o -c /home/moon/UPT-Outpost/src/parser/azure_parser.cpp",
+  "file": "/home/moon/UPT-Outpost/src/parser/azure_parser.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/parser/azure_parser.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/storage/postgres_storage_engine.cpp.o -c /home/moon/UPT-Outpost/src/storage/postgres_storage_engine.cpp",
+  "file": "/home/moon/UPT-Outpost/src/storage/postgres_storage_engine.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/storage/postgres_storage_engine.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/storage/retention.cpp.o -c /home/moon/UPT-Outpost/src/storage/retention.cpp",
+  "file": "/home/moon/UPT-Outpost/src/storage/retention.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/storage/retention.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/rules/rule.cpp.o -c /home/moon/UPT-Outpost/src/rules/rule.cpp",
+  "file": "/home/moon/UPT-Outpost/src/rules/rule.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/rules/rule.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/rules/rule_engine.cpp.o -c /home/moon/UPT-Outpost/src/rules/rule_engine.cpp",
+  "file": "/home/moon/UPT-Outpost/src/rules/rule_engine.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/rules/rule_engine.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_lib.dir/src/api/server.cpp.o -c /home/moon/UPT-Outpost/src/api/server.cpp",
+  "file": "/home/moon/UPT-Outpost/src/api/server.cpp",
+  "output": "CMakeFiles/outpost_lib.dir/src/api/server.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost.dir/src/main.cpp.o -c /home/moon/UPT-Outpost/src/main.cpp",
+  "file": "/home/moon/UPT-Outpost/src/main.cpp",
+  "output": "CMakeFiles/outpost.dir/src/main.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/include -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_tests.dir/tests/test_ring_buffer.cpp.o -c /home/moon/UPT-Outpost/tests/test_ring_buffer.cpp",
+  "file": "/home/moon/UPT-Outpost/tests/test_ring_buffer.cpp",
+  "output": "CMakeFiles/outpost_tests.dir/tests/test_ring_buffer.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/include -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_tests.dir/tests/test_parsers.cpp.o -c /home/moon/UPT-Outpost/tests/test_parsers.cpp",
+  "file": "/home/moon/UPT-Outpost/tests/test_parsers.cpp",
+  "output": "CMakeFiles/outpost_tests.dir/tests/test_parsers.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/include -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_tests.dir/tests/test_storage.cpp.o -c /home/moon/UPT-Outpost/tests/test_storage.cpp",
+  "file": "/home/moon/UPT-Outpost/tests/test_storage.cpp",
+  "output": "CMakeFiles/outpost_tests.dir/tests/test_storage.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build",
+  "command": "/usr/bin/c++ -DCPPHTTPLIB_OPENSSL_SUPPORT -DSPDLOG_COMPILED_LIB -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/src -I/home/moon/UPT-Outpost/build/_deps/json-src/include -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/usr/include/postgresql -isystem /home/moon/UPT-Outpost/build/_deps/httplib-src -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/include -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/outpost_tests.dir/tests/test_rules.cpp.o -c /home/moon/UPT-Outpost/tests/test_rules.cpp",
+  "file": "/home/moon/UPT-Outpost/tests/test_rules.cpp",
+  "output": "CMakeFiles/outpost_tests.dir/tests/test_rules.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/spdlog-build",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/spdlog.dir/src/spdlog.cpp.o -c /home/moon/UPT-Outpost/build/_deps/spdlog-src/src/spdlog.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/spdlog-src/src/spdlog.cpp",
+  "output": "_deps/spdlog-build/CMakeFiles/spdlog.dir/src/spdlog.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/spdlog-build",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/spdlog.dir/src/stdout_sinks.cpp.o -c /home/moon/UPT-Outpost/build/_deps/spdlog-src/src/stdout_sinks.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/spdlog-src/src/stdout_sinks.cpp",
+  "output": "_deps/spdlog-build/CMakeFiles/spdlog.dir/src/stdout_sinks.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/spdlog-build",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/spdlog.dir/src/color_sinks.cpp.o -c /home/moon/UPT-Outpost/build/_deps/spdlog-src/src/color_sinks.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/spdlog-src/src/color_sinks.cpp",
+  "output": "_deps/spdlog-build/CMakeFiles/spdlog.dir/src/color_sinks.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/spdlog-build",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/spdlog.dir/src/file_sinks.cpp.o -c /home/moon/UPT-Outpost/build/_deps/spdlog-src/src/file_sinks.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/spdlog-src/src/file_sinks.cpp",
+  "output": "_deps/spdlog-build/CMakeFiles/spdlog.dir/src/file_sinks.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/spdlog-build",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/spdlog.dir/src/async.cpp.o -c /home/moon/UPT-Outpost/build/_deps/spdlog-src/src/async.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/spdlog-src/src/async.cpp",
+  "output": "_deps/spdlog-build/CMakeFiles/spdlog.dir/src/async.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/spdlog-build",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/spdlog.dir/src/cfg.cpp.o -c /home/moon/UPT-Outpost/build/_deps/spdlog-src/src/cfg.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/spdlog-src/src/cfg.cpp",
+  "output": "_deps/spdlog-build/CMakeFiles/spdlog.dir/src/cfg.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/spdlog-build",
+  "command": "/usr/bin/c++ -DSPDLOG_COMPILED_LIB -I/home/moon/UPT-Outpost/build/_deps/spdlog-src/include -O3 -DNDEBUG -std=c++20 -o CMakeFiles/spdlog.dir/src/bundled_fmtlib_format.cpp.o -c /home/moon/UPT-Outpost/build/_deps/spdlog-src/src/bundled_fmtlib_format.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/spdlog-src/src/bundled_fmtlib_format.cpp",
+  "output": "_deps/spdlog-build/CMakeFiles/spdlog.dir/src/bundled_fmtlib_format.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/contrib/graphbuilder.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/contrib/graphbuilder.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/contrib/graphbuilder.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/contrib/graphbuilder.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/contrib/graphbuilderadapter.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/contrib/graphbuilderadapter.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/contrib/graphbuilderadapter.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/contrib/graphbuilderadapter.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/binary.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/binary.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/binary.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/binary.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/convert.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/convert.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/convert.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/convert.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/depthguard.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/depthguard.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/depthguard.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/depthguard.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/directives.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/directives.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/directives.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/directives.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/emit.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emit.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emit.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/emit.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/emitfromevents.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emitfromevents.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emitfromevents.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/emitfromevents.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/emitter.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emitter.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emitter.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/emitter.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/emitterstate.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emitterstate.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emitterstate.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/emitterstate.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/emitterutils.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emitterutils.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/emitterutils.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/emitterutils.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/exceptions.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/exceptions.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/exceptions.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/exceptions.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/exp.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/exp.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/exp.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/exp.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/memory.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/memory.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/memory.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/memory.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/node.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/node.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/node.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/node.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/node_data.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/node_data.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/node_data.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/node_data.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/nodebuilder.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/nodebuilder.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/nodebuilder.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/nodebuilder.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/nodeevents.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/nodeevents.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/nodeevents.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/nodeevents.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/null.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/null.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/null.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/null.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/ostream_wrapper.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/ostream_wrapper.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/ostream_wrapper.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/ostream_wrapper.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/parse.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/parse.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/parse.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/parse.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/parser.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/parser.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/parser.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/parser.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/regex_yaml.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/regex_yaml.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/regex_yaml.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/regex_yaml.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/scanner.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/scanner.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/scanner.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/scanner.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/scanscalar.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/scanscalar.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/scanscalar.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/scanscalar.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/scantag.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/scantag.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/scantag.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/scantag.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/scantoken.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/scantoken.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/scantoken.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/scantoken.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/simplekey.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/simplekey.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/simplekey.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/simplekey.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/singledocparser.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/singledocparser.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/singledocparser.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/singledocparser.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/stream.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/stream.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/stream.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/stream.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/yaml-cpp.dir/src/tag.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/tag.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/src/tag.cpp",
+  "output": "_deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/src/tag.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build/util",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/yaml-cpp-sandbox.dir/sandbox.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/util/sandbox.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/util/sandbox.cpp",
+  "output": "_deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-sandbox.dir/sandbox.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build/util",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/yaml-cpp-parse.dir/parse.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/util/parse.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/util/parse.cpp",
+  "output": "_deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-parse.dir/parse.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-build/util",
+  "command": "/usr/bin/c++ -DYAML_CPP_STATIC_DEFINE -I/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/include -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/yaml-cpp-read.dir/read.cpp.o -c /home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/util/read.cpp",
+  "file": "/home/moon/UPT-Outpost/build/_deps/yaml-cpp-src/util/read.cpp",
+  "output": "_deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-read.dir/read.cpp.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/googletest-build/googlemock",
+  "command": "/usr/bin/c++  -I/home/moon/UPT-Outpost/build/_deps/googletest-src/googlemock/include -I/home/moon/UPT-Outpost/build/_deps/googletest-src/googlemock -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/include -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -o CMakeFiles/gmock.dir/src/gmock-all.cc.o -c /home/moon/UPT-Outpost/build/_deps/googletest-src/googlemock/src/gmock-all.cc",
+  "file": "/home/moon/UPT-Outpost/build/_deps/googletest-src/googlemock/src/gmock-all.cc",
+  "output": "_deps/googletest-build/googlemock/CMakeFiles/gmock.dir/src/gmock-all.cc.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/googletest-build/googlemock",
+  "command": "/usr/bin/c++  -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googlemock/include -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googlemock -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/include -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -o CMakeFiles/gmock_main.dir/src/gmock_main.cc.o -c /home/moon/UPT-Outpost/build/_deps/googletest-src/googlemock/src/gmock_main.cc",
+  "file": "/home/moon/UPT-Outpost/build/_deps/googletest-src/googlemock/src/gmock_main.cc",
+  "output": "_deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/src/gmock_main.cc.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/googletest-build/googletest",
+  "command": "/usr/bin/c++  -I/home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/include -I/home/moon/UPT-Outpost/build/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -o CMakeFiles/gtest.dir/src/gtest-all.cc.o -c /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/src/gtest-all.cc",
+  "file": "/home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/src/gtest-all.cc",
+  "output": "_deps/googletest-build/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.o"
+},
+{
+  "directory": "/home/moon/UPT-Outpost/build/_deps/googletest-build/googletest",
+  "command": "/usr/bin/c++  -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/include -isystem /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest -O3 -DNDEBUG -std=c++20 -Wall -Wshadow -Wundef -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -o CMakeFiles/gtest_main.dir/src/gtest_main.cc.o -c /home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/src/gtest_main.cc",
+  "file": "/home/moon/UPT-Outpost/build/_deps/googletest-src/googletest/src/gtest_main.cc",
+  "output": "_deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o"
+}
+]

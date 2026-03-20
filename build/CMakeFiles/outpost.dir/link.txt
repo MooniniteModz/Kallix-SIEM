@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/outpost.dir/src/main.cpp.o -o outpost  liboutpost_lib.a _deps/spdlog-build/libspdlog.a _deps/yaml-cpp-build/libyaml-cpp.a /usr/lib/x86_64-linux-gnu/libssl.so /usr/lib/x86_64-linux-gnu/libcrypto.so -lpq -lpthread /usr/lib/x86_64-linux-gnu/libssl.so /usr/lib/x86_64-linux-gnu/libcrypto.so 

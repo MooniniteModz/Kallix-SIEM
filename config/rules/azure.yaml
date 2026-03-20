@@ -1,0 +1,42 @@
+rules:
+  - id: AZ-ROLE-001
+    name: Azure Role Assignment
+    description: Detects role assignment writes in Azure - potential privilege escalation
+    severity: high
+    type: threshold
+    tags: [privilege_escalation, iam, azure]
+    filter:
+      source_type: azure
+      category: auth
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: AZ-NSG-001
+    name: Network Security Group Modified
+    description: Detects changes to NSG rules - potential firewall bypass
+    severity: high
+    type: threshold
+    tags: [network_tampering, nsg, azure]
+    filter:
+      source_type: azure
+      category: network
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: AZ-RG-DEL-001
+    name: Resource Group Deletion
+    description: Detects resource group deletion - potential destructive action
+    severity: critical
+    type: valuelist
+    tags: [destruction, azure]
+    filter:
+      source_type: azure
+    condition:
+      field: action
+      values:
+        - "resourcegroups_delete"
+        - "resourceGroups_delete"
