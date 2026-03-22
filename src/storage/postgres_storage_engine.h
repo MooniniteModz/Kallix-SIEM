@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common/event.h"
-#include <libpq-fe.h>  // PostgreSQL C client library
+#include <libpq-fe.h>  // Postgre C library
 #include <memory>
 #include <mutex>
 #include <string>
@@ -99,6 +99,9 @@ private:
 
     /// Thread safety for buffer
     std::mutex write_mutex_;
+
+    /// Thread safety for connection (libpq is not thread-safe per-connection)
+    std::mutex conn_mutex_;
 
     /// Stats
     uint64_t total_inserted_ = 0;

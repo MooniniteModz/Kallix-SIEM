@@ -20,6 +20,11 @@ void HttpPoller::start() {
     }
 }
 void HttpPoller::stop() {}
+void HttpPoller::reconfigure(const HttpPollerConfig& new_config) {
+    stop();
+    config_ = new_config;
+    start();
+}
 std::string HttpPoller::get_access_token(const OAuthConfig&, const std::string&) { return ""; }
 void HttpPoller::m365_poll_loop() {}
 void HttpPoller::azure_poll_loop() {}
@@ -57,6 +62,14 @@ void HttpPoller::stop() {
 
     LOG_INFO("HTTP pollers stopped. M365 events: {}, Azure events: {}",
              m365_count_.load(), azure_count_.load());
+}
+
+void HttpPoller::reconfigure(const HttpPollerConfig& new_config) {
+    stop();
+    config_ = new_config;
+    m365_token_.clear();
+    azure_token_.clear();
+    start();
 }
 
 // ── OAuth2 Client Credentials Flow ──

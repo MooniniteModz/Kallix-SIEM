@@ -2,6 +2,7 @@
 
 #include "storage/postgres_storage_engine.h"
 #include "ingestion/ring_buffer.h"
+#include "ingestion/http_poller.h"
 #include <httplib.h>
 #include <thread>
 #include <atomic>
@@ -22,6 +23,7 @@ struct ApiConfig {
 class ApiServer {
 public:
     ApiServer(PostgresStorageEngine& storage, RingBuffer<>& buffer,
+              HttpPoller& poller, const std::string& config_path,
               const ApiConfig& config = {});
     ~ApiServer();
 
@@ -34,6 +36,8 @@ private:
     httplib::Server   server_;
     PostgresStorageEngine&    storage_;
     RingBuffer<>&     buffer_;
+    HttpPoller&       poller_;
+    std::string       config_path_;
     ApiConfig         config_;
     std::thread       thread_;
     std::atomic<bool> running_{false};

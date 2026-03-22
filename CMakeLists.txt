@@ -115,4 +115,8 @@ if(OUTPOST_BUILD_TESTS)
     target_link_libraries(outpost_tests PRIVATE outpost_lib GTest::gtest_main)
     include(GoogleTest)
     gtest_discover_tests(outpost_tests)
+
+    # ── Data injector tool (for testing/demo) ──
+    add_executable(inject_events tests/test_inject_events.cpp)
+    target_link_libraries(inject_events PRIVATE outpost_lib)
 endif()

@@ -8,12 +8,15 @@ syslog:
   udp_port: 5514        # Use 514 in production (requires root or CAP_NET_BIND_SERVICE)
   tcp_port: 5514
   enable_udp: true
-  enable_tcp: true
+  enable_tcp: true      
 
-# Storage
-last:
-  data_dir: "./data"
-  retention_days: 90
+# PostgreSQL storage
+postgres:
+  host: "localhost"
+  port: 5432
+  database: "outpost"
+  user: "postgres"
+  password: "s00ners!"
   batch_size: 1000
   flush_interval_ms: 1000
 
@@ -21,6 +24,22 @@ last:
 api:
   bind_address: "0.0.0.0"
   port: 8080
+
+# Integrations (API connectors)
+integrations:
+  m365:
+    enabled: false
+    tenant_id: ""
+    client_id: ""
+    client_secret: ""
+    poll_interval_sec: 60
+  azure:
+    enabled: false
+    tenant_id: ""
+    client_id: ""
+    client_secret: ""
+    subscription_id: ""
+    poll_interval_sec: 60
 
 # Parser configuration
 parsers:

@@ -54,6 +54,12 @@ public:
     void start();
     void stop();
 
+    /// Reconfigure and restart with new settings
+    void reconfigure(const HttpPollerConfig& new_config);
+
+    /// Get current config (for API readback)
+    const HttpPollerConfig& config() const { return config_; }
+
     bool is_running() const { return running_.load(std::memory_order_relaxed); }
 
     uint64_t m365_events()  const { return m365_count_.load(std::memory_order_relaxed); }

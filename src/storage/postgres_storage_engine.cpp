@@ -53,6 +53,7 @@ bool PostgresStorageEngine::init() {
     // Also try the Unix socket as a fallback
     // This helps with peer authentication on local systems
     conn_str << " fallback_application_name=outpost";
+    conn_str << " sslmode=disable";
 
     // Step 2: Open connection
     conn_ = PQconnectdb(conn_str.str().c_str());
@@ -156,6 +157,7 @@ void PostgresStorageEngine::insert(const Event& event) {
 void PostgresStorageEngine::flush() {
     // Lock before accessing write_buffer_
     std::lock_guard<std::mutex> lock(write_mutex_);
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
 
     if (write_buffer_.empty()) {
         return;  // Nothing to do
@@ -268,6 +270,7 @@ void PostgresStorageEngine::flush() {
 std::vector<Event> PostgresStorageEngine::query(int64_t start_ms, int64_t end_ms,
                                                 const std::string& keyword,
                                                 int limit, int offset) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
     std::vector<Event> results;
 
     if (!conn_) {
@@ -342,6 +345,7 @@ std::vector<Event> PostgresStorageEngine::query(int64_t start_ms, int64_t end_ms
 }
 
 std::vector<Event> PostgresStorageEngine::query_by_id(const std::string& event_id) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
     std::vector<Event> results;
 
     if (!conn_) return results;
@@ -438,7 +442,7 @@ Event PostgresStorageEngine::result_to_event(PGresult* result, int row) {
 
 std::vector<std::pair<std::string, int64_t>> PostgresStorageEngine::count_by_field(
     const std::string& field) {
-
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
     std::vector<std::pair<std::string, int64_t>> results;
 
     if (!conn_) return results;
@@ -485,7 +489,7 @@ std::vector<std::pair<std::string, int64_t>> PostgresStorageEngine::count_by_fie
 
 std::vector<std::pair<std::string, int64_t>> PostgresStorageEngine::top_values(
     const std::string& field, int limit) {
-
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
     std::vector<std::pair<std::string, int64_t>> results;
 
     if (!conn_) return results;
@@ -529,6 +533,7 @@ std::vector<std::pair<std::string, int64_t>> PostgresStorageEngine::top_values(
 }
 
 std::vector<std::pair<int64_t, int64_t>> PostgresStorageEngine::event_timeline(int hours) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
     std::vector<std::pair<int64_t, int64_t>> results;
 
     if (!conn_) return results;
@@ -565,6 +570,7 @@ std::vector<std::pair<int64_t, int64_t>> PostgresStorageEngine::event_timeline(i
 }
 
 int64_t PostgresStorageEngine::count_today() {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
     if (!conn_) return 0;
 
     PGresult* result = PQexec(conn_, "SELECT COUNT(*) FROM events;");
@@ -585,6 +591,7 @@ int64_t PostgresStorageEngine::count_today() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 void PostgresStorageEngine::insert_alert(const Alert& alert) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
     if (!conn_) return;
 
     const char* sql = "INSERT INTO alerts "
@@ -619,6 +626,7 @@ void PostgresStorageEngine::insert_alert(const Alert& alert) {
 }
 
 std::vector<Alert> PostgresStorageEngine::get_alerts(int limit) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
     std::vector<Alert> results;
 
     if (!conn_) return results;

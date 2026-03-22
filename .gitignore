@@ -1,1 +1,4 @@
-.claude/
+.build/
+.Docs/
+build/
+frontend/node_modules/

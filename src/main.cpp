@@ -12,6 +12,8 @@
 #include "storage/postgres_storage_engine.h"
 #include "api/server.h"
 
+#include <yaml-cpp/yaml.h>
+
 #include <atomic>
 #include <chrono>
 #include <csignal>
@@ -97,40 +99,45 @@ int main(int argc, char* argv[]) {
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
 
+    // ── Load configuration from YAML ──
+    std::string config_path = "./config/outpost.yaml";
+    if (argc > 1) config_path = argv[1];
+
+    YAML::Node config;
+    try {
+        config = YAML::LoadFile(config_path);
+        LOG_INFO("Loaded configuration from {}", config_path);
+    } catch (const YAML::Exception& e) {
+        LOG_WARN("Could not load {}: {} — using defaults", config_path, e.what());
+    }
+
     // ── Components ──
     RingBuffer<> buffer;  // 65536-slot ring buffer
 
-    // Storage (PostgreSQL) - Read from environment variables
-    // This allows flexible configuration across dev/test/prod without recompiling
+    // Storage (PostgreSQL) - YAML config with env var overrides
     PostgresConfig storage_config;
 
-    // Database host (defaults to domain name, can be overridden by env var)
-    const char* pg_host = std::getenv("PGHOST");
-    storage_config.host = pg_host ? std::string(pg_host) : "outpost.otl-upt.com";
+    auto pg = config["postgres"];
+    storage_config.host     = pg && pg["host"]     ? pg["host"].as<std::string>()     : "localhost";
+    storage_config.port     = pg && pg["port"]      ? pg["port"].as<int>()             : 5432;
+    storage_config.dbname   = pg && pg["database"]  ? pg["database"].as<std::string>() : "outpost";
+    storage_config.user     = pg && pg["user"]      ? pg["user"].as<std::string>()     : "postgres";
+    storage_config.password = pg && pg["password"]  ? pg["password"].as<std::string>() : "";
+    storage_config.batch_size       = pg && pg["batch_size"]       ? pg["batch_size"].as<int>()       : 1000;
+    storage_config.flush_interval_ms = pg && pg["flush_interval_ms"] ? pg["flush_interval_ms"].as<int>() : 1000;
 
-    // Database port (defaults to 5432)
-    const char* pg_port = std::getenv("PGPORT");
-    storage_config.port = pg_port ? std::stoi(std::string(pg_port)) : 5432;
+    // Environment variables override YAML (standard PG* vars)
+    if (const char* v = std::getenv("PGHOST"))     storage_config.host     = v;
+    if (const char* v = std::getenv("PGPORT"))     storage_config.port     = std::stoi(v);
+    if (const char* v = std::getenv("PGDATABASE")) storage_config.dbname   = v;
+    if (const char* v = std::getenv("PGUSER"))     storage_config.user     = v;
+    if (const char* v = std::getenv("PGPASSWORD")) storage_config.password = v;
 
-    // Database name (defaults to "outpost")
-    const char* pg_db = std::getenv("PGDATABASE");
-    storage_config.dbname = pg_db ? std::string(pg_db) : "outpost";
-
-    // Database user (defaults to "postgres")
-    const char* pg_user = std::getenv("PGUSER");
-    storage_config.user = pg_user ? std::string(pg_user) : "postgres";
-
-    // Database password (must be set via environment variable for security)
-    const char* pg_pass = std::getenv("PGPASSWORD");
-    storage_config.password = pg_pass ? std::string(pg_pass) : "";
-
-    // Log configuration being used
     LOG_INFO("PostgreSQL Configuration:");
     LOG_INFO("  Host:     {}", storage_config.host);
     LOG_INFO("  Port:     {}", storage_config.port);
     LOG_INFO("  Database: {}", storage_config.dbname);
     LOG_INFO("  User:     {}", storage_config.user);
-    storage_config.batch_size = 1000;
     PostgresStorageEngine storage(storage_config);
     if (!storage.init()) {
         LOG_CRITICAL("Failed to initialize PostgreSQL storage engine");
@@ -151,11 +158,26 @@ int main(int argc, char* argv[]) {
     syslog_config.tcp_port = 5514;
     SyslogListener listener(buffer, syslog_config);
 
-    // HTTP Poller (M365 + Azure; disabled by default, enable in config)
+    // HTTP Poller (M365 + Azure) - load from YAML
     HttpPollerConfig poller_config;
-    // These would be loaded from outpost.yaml in a full implementation.
-    // For now, they default to disabled. Set m365_enabled/azure_enabled = true
-    // and provide OAuth credentials to activate.
+    auto integ = config["integrations"];
+    if (integ && integ["m365"]) {
+        auto m = integ["m365"];
+        poller_config.m365_enabled = m["enabled"] ? m["enabled"].as<bool>() : false;
+        poller_config.m365_oauth.tenant_id     = m["tenant_id"]     ? m["tenant_id"].as<std::string>()     : "";
+        poller_config.m365_oauth.client_id     = m["client_id"]     ? m["client_id"].as<std::string>()     : "";
+        poller_config.m365_oauth.client_secret = m["client_secret"] ? m["client_secret"].as<std::string>() : "";
+        poller_config.m365_poll_interval_sec   = m["poll_interval_sec"] ? m["poll_interval_sec"].as<int>() : 60;
+    }
+    if (integ && integ["azure"]) {
+        auto a = integ["azure"];
+        poller_config.azure_enabled = a["enabled"] ? a["enabled"].as<bool>() : false;
+        poller_config.azure_oauth.tenant_id     = a["tenant_id"]     ? a["tenant_id"].as<std::string>()     : "";
+        poller_config.azure_oauth.client_id     = a["client_id"]     ? a["client_id"].as<std::string>()     : "";
+        poller_config.azure_oauth.client_secret = a["client_secret"] ? a["client_secret"].as<std::string>() : "";
+        poller_config.azure_subscription_id     = a["subscription_id"] ? a["subscription_id"].as<std::string>() : "";
+        poller_config.azure_poll_interval_sec   = a["poll_interval_sec"] ? a["poll_interval_sec"].as<int>() : 60;
+    }
     HttpPoller poller(buffer, poller_config);
 
     // Rule engine
@@ -165,7 +187,7 @@ int main(int argc, char* argv[]) {
     // API server
     ApiConfig api_config;
     api_config.port = 8080;
-    ApiServer api(storage, buffer, api_config);
+    ApiServer api(storage, buffer, poller, config_path, api_config);
 
     // ── Start everything ──
     listener.start();
