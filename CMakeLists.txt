@@ -75,6 +75,7 @@ add_library(outpost_lib STATIC
     src/rules/rule.cpp
     src/rules/rule_engine.cpp
     src/api/server.cpp
+    src/auth/auth.cpp
 )
 
 target_include_directories(outpost_lib PUBLIC src)

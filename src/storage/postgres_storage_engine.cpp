@@ -120,6 +120,57 @@ bool PostgresStorageEngine::init() {
         );
 
         CREATE INDEX IF NOT EXISTS idx_alerts_created_at ON alerts(created_at DESC);
+
+        ALTER TABLE alerts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'open';
+
+        CREATE TABLE IF NOT EXISTS users (
+            user_id       TEXT PRIMARY KEY,
+            username      TEXT UNIQUE NOT NULL,
+            email         TEXT UNIQUE DEFAULT '',
+            password_hash TEXT NOT NULL,
+            salt          TEXT NOT NULL,
+            role          TEXT DEFAULT 'admin',
+            created_at    BIGINT NOT NULL
+        );
+
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT UNIQUE DEFAULT '';
+
+        CREATE TABLE IF NOT EXISTS sessions (
+            token      TEXT PRIMARY KEY,
+            user_id    TEXT NOT NULL,
+            created_at BIGINT NOT NULL,
+            expires_at BIGINT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS connectors (
+            connector_id TEXT PRIMARY KEY,
+            name         TEXT NOT NULL,
+            type         TEXT NOT NULL,
+            enabled      INTEGER DEFAULT 0,
+            settings     JSONB,
+            status       TEXT DEFAULT 'stopped',
+            event_count  BIGINT DEFAULT 0,
+            created_at   BIGINT NOT NULL,
+            updated_at   BIGINT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS custom_rules (
+            rule_id      TEXT PRIMARY KEY,
+            name         TEXT NOT NULL,
+            description  TEXT DEFAULT '',
+            severity     TEXT DEFAULT 'medium',
+            type         TEXT DEFAULT 'threshold',
+            source_type  TEXT DEFAULT '',
+            category     TEXT DEFAULT '',
+            action       TEXT DEFAULT '',
+            field_match  TEXT DEFAULT '',
+            field_value  TEXT DEFAULT '',
+            config_json  TEXT DEFAULT '{}',
+            tags_json    TEXT DEFAULT '[]',
+            enabled      INTEGER DEFAULT 1,
+            created_at   BIGINT NOT NULL,
+            updated_at   BIGINT NOT NULL
+        );
     )";
 
     PGresult* result = PQexec(conn_, create_tables_sql);
@@ -678,6 +729,457 @@ std::vector<Alert> PostgresStorageEngine::get_alerts(int limit) {
 
     PQclear(result);
     return results;
+}
+
+bool PostgresStorageEngine::update_alert_status(const std::string& alert_id, const std::string& status) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    std::string sql;
+    if (status == "acknowledged") {
+        sql = "UPDATE alerts SET acknowledged = 1, status = 'acknowledged' WHERE alert_id = $1;";
+    } else if (status == "closed") {
+        sql = "UPDATE alerts SET status = 'closed' WHERE alert_id = $1;";
+    } else {
+        sql = "UPDATE alerts SET status = $2 WHERE alert_id = $1;";
+    }
+
+    if (status == "acknowledged" || status == "closed") {
+        const char* params[] = { alert_id.c_str() };
+        PGresult* result = PQexecParams(conn_, sql.c_str(), 1, nullptr, params, nullptr, nullptr, 0);
+        bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+        PQclear(result);
+        return ok;
+    } else {
+        const char* params[] = { alert_id.c_str(), status.c_str() };
+        PGresult* result = PQexecParams(conn_, sql.c_str(), 2, nullptr, params, nullptr, nullptr, 0);
+        bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+        PQclear(result);
+        return ok;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTH: USERS AND SESSIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+bool PostgresStorageEngine::create_user(const std::string& user_id,
+                                         const std::string& username,
+                                         const std::string& email,
+                                         const std::string& password_hash,
+                                         const std::string& salt,
+                                         const std::string& role) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "INSERT INTO users (user_id, username, email, password_hash, salt, role, created_at) "
+                      "VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (username) DO NOTHING;";
+    std::string ts = std::to_string(now_ms());
+    const char* params[] = { user_id.c_str(), username.c_str(), email.c_str(),
+                             password_hash.c_str(), salt.c_str(),
+                             role.c_str(), ts.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 7, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    if (!ok) LOG_WARN("create_user failed: {}", PQerrorMessage(conn_));
+    PQclear(result);
+    return ok;
+}
+
+bool PostgresStorageEngine::update_user(const std::string& user_id,
+                                         const std::string& email,
+                                         const std::string& role) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "UPDATE users SET email = $2, role = $3 WHERE user_id = $1;";
+    const char* params[] = { user_id.c_str(), email.c_str(), role.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 3, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    PQclear(result);
+    return ok;
+}
+
+bool PostgresStorageEngine::update_user_password(const std::string& user_id,
+                                                  const std::string& password_hash,
+                                                  const std::string& salt) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "UPDATE users SET password_hash = $2, salt = $3 WHERE user_id = $1;";
+    const char* params[] = { user_id.c_str(), password_hash.c_str(), salt.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 3, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    PQclear(result);
+    return ok;
+}
+
+bool PostgresStorageEngine::delete_user(const std::string& user_id) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    // Delete user's sessions first
+    const char* sql1 = "DELETE FROM sessions WHERE user_id = $1;";
+    const char* params[] = { user_id.c_str() };
+    PGresult* r1 = PQexecParams(conn_, sql1, 1, nullptr, params, nullptr, nullptr, 0);
+    PQclear(r1);
+
+    const char* sql2 = "DELETE FROM users WHERE user_id = $1;";
+    PGresult* r2 = PQexecParams(conn_, sql2, 1, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(r2) == PGRES_COMMAND_OK;
+    PQclear(r2);
+    return ok;
+}
+
+static PostgresStorageEngine::UserRecord row_to_user(PGresult* result, int row) {
+    PostgresStorageEngine::UserRecord rec;
+    rec.user_id       = PQgetvalue(result, row, 0);
+    rec.username      = PQgetvalue(result, row, 1);
+    rec.email         = PQgetvalue(result, row, 2);
+    rec.password_hash = PQgetvalue(result, row, 3);
+    rec.salt          = PQgetvalue(result, row, 4);
+    rec.role          = PQgetvalue(result, row, 5);
+    rec.created_at    = std::stoll(PQgetvalue(result, row, 6));
+    return rec;
+}
+
+std::optional<PostgresStorageEngine::UserRecord>
+PostgresStorageEngine::get_user_by_username(const std::string& username) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return std::nullopt;
+
+    const char* sql = "SELECT user_id, username, email, password_hash, salt, role, created_at FROM users WHERE username = $1;";
+    const char* params[] = { username.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 1, nullptr, params, nullptr, nullptr, 0);
+
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) == 0) {
+        PQclear(result);
+        return std::nullopt;
+    }
+
+    auto rec = row_to_user(result, 0);
+    PQclear(result);
+    return rec;
+}
+
+std::optional<PostgresStorageEngine::UserRecord>
+PostgresStorageEngine::get_user_by_email(const std::string& email) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return std::nullopt;
+
+    const char* sql = "SELECT user_id, username, email, password_hash, salt, role, created_at FROM users WHERE email = $1;";
+    const char* params[] = { email.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 1, nullptr, params, nullptr, nullptr, 0);
+
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) == 0) {
+        PQclear(result);
+        return std::nullopt;
+    }
+
+    auto rec = row_to_user(result, 0);
+    PQclear(result);
+    return rec;
+}
+
+std::vector<PostgresStorageEngine::UserRecord>
+PostgresStorageEngine::list_users() {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    std::vector<UserRecord> users;
+    if (!conn_) return users;
+
+    PGresult* result = PQexec(conn_, "SELECT user_id, username, email, password_hash, salt, role, created_at FROM users ORDER BY created_at;");
+    if (PQresultStatus(result) != PGRES_TUPLES_OK) { PQclear(result); return users; }
+
+    int rows = PQntuples(result);
+    for (int i = 0; i < rows; ++i) {
+        users.push_back(row_to_user(result, i));
+    }
+    PQclear(result);
+    return users;
+}
+
+int PostgresStorageEngine::user_count() {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return 0;
+
+    PGresult* result = PQexec(conn_, "SELECT COUNT(*) FROM users;");
+    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+        PQclear(result);
+        return 0;
+    }
+    int count = std::stoi(PQgetvalue(result, 0, 0));
+    PQclear(result);
+    return count;
+}
+
+bool PostgresStorageEngine::create_session(const std::string& token,
+                                            const std::string& user_id,
+                                            int64_t created_at,
+                                            int64_t expires_at) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "INSERT INTO sessions (token, user_id, created_at, expires_at) "
+                      "VALUES ($1, $2, $3, $4);";
+    std::string ca = std::to_string(created_at);
+    std::string ea = std::to_string(expires_at);
+    const char* params[] = { token.c_str(), user_id.c_str(), ca.c_str(), ea.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 4, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    PQclear(result);
+    return ok;
+}
+
+std::optional<PostgresStorageEngine::SessionInfo>
+PostgresStorageEngine::validate_session(const std::string& token) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return std::nullopt;
+
+    std::string now = std::to_string(now_ms());
+    const char* sql = "SELECT s.user_id, u.username, u.email, u.role "
+                      "FROM sessions s JOIN users u ON s.user_id = u.user_id "
+                      "WHERE s.token = $1 AND s.expires_at > $2;";
+    const char* params[] = { token.c_str(), now.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 2, nullptr, params, nullptr, nullptr, 0);
+
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) == 0) {
+        PQclear(result);
+        return std::nullopt;
+    }
+
+    SessionInfo info;
+    info.user_id  = PQgetvalue(result, 0, 0);
+    info.username = PQgetvalue(result, 0, 1);
+    info.email    = PQgetvalue(result, 0, 2);
+    info.role     = PQgetvalue(result, 0, 3);
+    PQclear(result);
+    return info;
+}
+
+bool PostgresStorageEngine::delete_session(const std::string& token) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "DELETE FROM sessions WHERE token = $1;";
+    const char* params[] = { token.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 1, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    PQclear(result);
+    return ok;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CUSTOM RULES STORAGE
+// ═══════════════════════════════════════════════════════════════════════════
+
+std::vector<PostgresStorageEngine::CustomRuleRecord> PostgresStorageEngine::get_custom_rules() {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    std::vector<CustomRuleRecord> rules;
+    if (!conn_) return rules;
+
+    PGresult* result = PQexec(conn_,
+        "SELECT rule_id, name, description, severity, type, source_type, category, action, "
+        "field_match, field_value, config_json, tags_json, enabled, created_at, updated_at "
+        "FROM custom_rules ORDER BY created_at;");
+    if (PQresultStatus(result) != PGRES_TUPLES_OK) { PQclear(result); return rules; }
+
+    int rows = PQntuples(result);
+    for (int i = 0; i < rows; ++i) {
+        CustomRuleRecord r;
+        r.id          = PQgetvalue(result, i, 0);
+        r.name        = PQgetvalue(result, i, 1);
+        r.description = PQgetvalue(result, i, 2);
+        r.severity    = PQgetvalue(result, i, 3);
+        r.type        = PQgetvalue(result, i, 4);
+        r.source_type = PQgetvalue(result, i, 5);
+        r.category    = PQgetvalue(result, i, 6);
+        r.action      = PQgetvalue(result, i, 7);
+        r.field_match = PQgetvalue(result, i, 8);
+        r.field_value = PQgetvalue(result, i, 9);
+        r.config_json = PQgetvalue(result, i, 10);
+        r.tags_json   = PQgetvalue(result, i, 11);
+        r.enabled     = std::string(PQgetvalue(result, i, 12)) == "1";
+        r.created_at  = std::stoll(PQgetvalue(result, i, 13));
+        r.updated_at  = std::stoll(PQgetvalue(result, i, 14));
+        rules.push_back(r);
+    }
+    PQclear(result);
+    return rules;
+}
+
+bool PostgresStorageEngine::save_custom_rule(const CustomRuleRecord& r) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "INSERT INTO custom_rules "
+        "(rule_id, name, description, severity, type, source_type, category, action, "
+        "field_match, field_value, config_json, tags_json, enabled, created_at, updated_at) "
+        "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15);";
+    std::string en = r.enabled ? "1" : "0";
+    std::string ca = std::to_string(r.created_at);
+    std::string ua = std::to_string(r.updated_at);
+    const char* params[] = {
+        r.id.c_str(), r.name.c_str(), r.description.c_str(), r.severity.c_str(), r.type.c_str(),
+        r.source_type.c_str(), r.category.c_str(), r.action.c_str(),
+        r.field_match.c_str(), r.field_value.c_str(), r.config_json.c_str(), r.tags_json.c_str(),
+        en.c_str(), ca.c_str(), ua.c_str()
+    };
+    PGresult* result = PQexecParams(conn_, sql, 15, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    if (!ok) LOG_WARN("save_custom_rule failed: {}", PQerrorMessage(conn_));
+    PQclear(result);
+    return ok;
+}
+
+bool PostgresStorageEngine::update_custom_rule(const CustomRuleRecord& r) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "UPDATE custom_rules SET "
+        "name=$2, description=$3, severity=$4, type=$5, source_type=$6, category=$7, action=$8, "
+        "field_match=$9, field_value=$10, config_json=$11, tags_json=$12, enabled=$13, updated_at=$14 "
+        "WHERE rule_id=$1;";
+    std::string en = r.enabled ? "1" : "0";
+    std::string ua = std::to_string(r.updated_at);
+    const char* params[] = {
+        r.id.c_str(), r.name.c_str(), r.description.c_str(), r.severity.c_str(), r.type.c_str(),
+        r.source_type.c_str(), r.category.c_str(), r.action.c_str(),
+        r.field_match.c_str(), r.field_value.c_str(), r.config_json.c_str(), r.tags_json.c_str(),
+        en.c_str(), ua.c_str()
+    };
+    PGresult* result = PQexecParams(conn_, sql, 14, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    PQclear(result);
+    return ok;
+}
+
+bool PostgresStorageEngine::delete_custom_rule(const std::string& id) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "DELETE FROM custom_rules WHERE rule_id = $1;";
+    const char* params[] = { id.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 1, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    PQclear(result);
+    return ok;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONNECTOR STORAGE
+// ═══════════════════════════════════════════════════════════════════════════
+
+std::vector<PostgresStorageEngine::ConnectorRecord> PostgresStorageEngine::get_connectors() {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    std::vector<ConnectorRecord> results;
+    if (!conn_) return results;
+
+    PGresult* result = PQexec(conn_,
+        "SELECT connector_id, name, type, enabled, settings::text, status, event_count, "
+        "created_at, updated_at FROM connectors ORDER BY created_at DESC;");
+
+    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+        PQclear(result);
+        return results;
+    }
+
+    int rows = PQntuples(result);
+    for (int i = 0; i < rows; ++i) {
+        ConnectorRecord c;
+        c.id            = PQgetvalue(result, i, 0);
+        c.name          = PQgetvalue(result, i, 1);
+        c.type          = PQgetvalue(result, i, 2);
+        c.enabled       = std::string(PQgetvalue(result, i, 3)) == "1";
+        c.settings_json = PQgetisnull(result, i, 4) ? "{}" : PQgetvalue(result, i, 4);
+        c.status        = PQgetvalue(result, i, 5);
+        c.event_count   = std::stoll(PQgetvalue(result, i, 6));
+        c.created_at    = std::stoll(PQgetvalue(result, i, 7));
+        c.updated_at    = std::stoll(PQgetvalue(result, i, 8));
+        results.push_back(std::move(c));
+    }
+
+    PQclear(result);
+    return results;
+}
+
+std::optional<PostgresStorageEngine::ConnectorRecord>
+PostgresStorageEngine::get_connector(const std::string& id) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return std::nullopt;
+
+    const char* sql = "SELECT connector_id, name, type, enabled, settings::text, status, "
+                      "event_count, created_at, updated_at FROM connectors WHERE connector_id = $1;";
+    const char* params[] = { id.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 1, nullptr, params, nullptr, nullptr, 0);
+
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) == 0) {
+        PQclear(result);
+        return std::nullopt;
+    }
+
+    ConnectorRecord c;
+    c.id            = PQgetvalue(result, 0, 0);
+    c.name          = PQgetvalue(result, 0, 1);
+    c.type          = PQgetvalue(result, 0, 2);
+    c.enabled       = std::string(PQgetvalue(result, 0, 3)) == "1";
+    c.settings_json = PQgetisnull(result, 0, 4) ? "{}" : PQgetvalue(result, 0, 4);
+    c.status        = PQgetvalue(result, 0, 5);
+    c.event_count   = std::stoll(PQgetvalue(result, 0, 6));
+    c.created_at    = std::stoll(PQgetvalue(result, 0, 7));
+    c.updated_at    = std::stoll(PQgetvalue(result, 0, 8));
+    PQclear(result);
+    return c;
+}
+
+bool PostgresStorageEngine::save_connector(const ConnectorRecord& c) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "INSERT INTO connectors "
+                      "(connector_id, name, type, enabled, settings, status, event_count, created_at, updated_at) "
+                      "VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9);";
+    std::string en = c.enabled ? "1" : "0";
+    std::string ec = std::to_string(c.event_count);
+    std::string ca = std::to_string(c.created_at);
+    std::string ua = std::to_string(c.updated_at);
+    const char* params[] = { c.id.c_str(), c.name.c_str(), c.type.c_str(),
+                             en.c_str(), c.settings_json.c_str(), c.status.c_str(),
+                             ec.c_str(), ca.c_str(), ua.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 9, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    if (!ok) LOG_WARN("save_connector failed: {}", PQerrorMessage(conn_));
+    PQclear(result);
+    return ok;
+}
+
+bool PostgresStorageEngine::update_connector(const ConnectorRecord& c) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "UPDATE connectors SET name=$2, type=$3, enabled=$4, settings=$5::jsonb, "
+                      "status=$6, event_count=$7, updated_at=$8 WHERE connector_id=$1;";
+    std::string en = c.enabled ? "1" : "0";
+    std::string ec = std::to_string(c.event_count);
+    std::string ua = std::to_string(c.updated_at);
+    const char* params[] = { c.id.c_str(), c.name.c_str(), c.type.c_str(),
+                             en.c_str(), c.settings_json.c_str(), c.status.c_str(),
+                             ec.c_str(), ua.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 8, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    if (!ok) LOG_WARN("update_connector failed: {}", PQerrorMessage(conn_));
+    PQclear(result);
+    return ok;
+}
+
+bool PostgresStorageEngine::delete_connector(const std::string& id) {
+    std::lock_guard<std::mutex> conn_lock(conn_mutex_);
+    if (!conn_) return false;
+
+    const char* sql = "DELETE FROM connectors WHERE connector_id = $1;";
+    const char* params[] = { id.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 1, nullptr, params, nullptr, nullptr, 0);
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    PQclear(result);
+    return ok;
 }
 
 int64_t PostgresStorageEngine::alert_count() const {

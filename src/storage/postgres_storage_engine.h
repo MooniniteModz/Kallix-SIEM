@@ -2,8 +2,10 @@
 
 #include "common/event.h"
 #include <libpq-fe.h>  // Postgre C library
+#include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -76,6 +78,56 @@ public:
     void insert_alert(const Alert& alert);
     std::vector<Alert> get_alerts(int limit = 100);
     int64_t alert_count() const;
+    bool update_alert_status(const std::string& alert_id, const std::string& status);
+
+    // ── Auth methods ──
+    bool create_user(const std::string& user_id, const std::string& username,
+                     const std::string& email,
+                     const std::string& password_hash, const std::string& salt,
+                     const std::string& role);
+    bool update_user(const std::string& user_id, const std::string& email, const std::string& role);
+    bool update_user_password(const std::string& user_id,
+                              const std::string& password_hash, const std::string& salt);
+    bool delete_user(const std::string& user_id);
+
+    struct UserRecord { std::string user_id, username, email, password_hash, salt, role; int64_t created_at = 0; };
+    std::optional<UserRecord> get_user_by_username(const std::string& username);
+    std::optional<UserRecord> get_user_by_email(const std::string& email);
+    std::vector<UserRecord> list_users();
+    int user_count();
+
+    bool create_session(const std::string& token, const std::string& user_id,
+                        int64_t created_at, int64_t expires_at);
+    struct SessionInfo { std::string user_id, username, email, role; };
+    std::optional<SessionInfo> validate_session(const std::string& token);
+    bool delete_session(const std::string& token);
+
+    // ── Custom rules methods ──
+    struct CustomRuleRecord {
+        std::string id, name, description, severity, type;
+        std::string source_type, category, action, field_match, field_value;
+        std::string config_json;   // threshold/sequence/valuelist config as JSON
+        std::string tags_json;     // tags as JSON array
+        bool enabled = true;
+        int64_t created_at = 0, updated_at = 0;
+    };
+    std::vector<CustomRuleRecord> get_custom_rules();
+    bool save_custom_rule(const CustomRuleRecord& r);
+    bool update_custom_rule(const CustomRuleRecord& r);
+    bool delete_custom_rule(const std::string& id);
+
+    // ── Connector methods ──
+    struct ConnectorRecord {
+        std::string id, name, type, status;
+        bool enabled = false;
+        std::string settings_json;
+        int64_t event_count = 0, created_at = 0, updated_at = 0;
+    };
+    std::vector<ConnectorRecord> get_connectors();
+    std::optional<ConnectorRecord> get_connector(const std::string& id);
+    bool save_connector(const ConnectorRecord& c);
+    bool update_connector(const ConnectorRecord& c);
+    bool delete_connector(const std::string& id);
 
 private:
     /// Helper: Convert a PGresult row to an Event struct

@@ -1,30 +1,21 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area, Legend
+  PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
-import { Activity, AlertTriangle, Database, Clock, Zap, TrendingUp } from 'lucide-react';
+import { Activity, AlertTriangle, Database, Zap, TrendingUp, Pencil } from 'lucide-react';
 import { api } from '../api';
 
 const SEVERITY_COLORS = {
-  critical: '#f85149',
-  error: '#f85149',
-  high: '#db6d28',
-  warning: '#d29922',
-  medium: '#d29922',
-  low: '#3fb950',
-  info: '#58a6ff',
-  informational: '#58a6ff',
-  debug: '#8b949e',
+  critical: '#f85149', error: '#f85149', high: '#db6d28',
+  warning: '#d29922', medium: '#d29922', low: '#3fb950',
+  info: '#58a6ff', informational: '#58a6ff', debug: '#8b949e',
 };
 
 const SOURCE_COLORS = {
-  Azure: '#58a6ff',
-  M365: '#bc8cff',
-  FortiGate: '#db6d28',
-  Windows: '#79c0ff',
-  Syslog: '#3fb950',
-  Unknown: '#8b949e',
+  Azure: '#58a6ff', M365: '#bc8cff', FortiGate: '#db6d28',
+  Windows: '#79c0ff', Syslog: '#3fb950', Unknown: '#8b949e',
 };
 
 const CHART_COLORS = ['#00d4aa', '#58a6ff', '#bc8cff', '#db6d28', '#d29922', '#f85149', '#3fb950', '#79c0ff'];
@@ -48,21 +39,8 @@ function formatNumber(n) {
   return n.toLocaleString();
 }
 
-const CustomTooltip = ({ contentStyle, ...props }) => (
-  <Tooltip
-    contentStyle={{
-      background: '#161b22',
-      border: '1px solid #30363d',
-      borderRadius: 8,
-      boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-      fontSize: 12,
-      ...contentStyle
-    }}
-    {...props}
-  />
-);
-
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [health, setHealth] = useState(null);
   const [severity, setSeverity] = useState([]);
   const [sources, setSources] = useState([]);
@@ -77,13 +55,8 @@ export default function Dashboard() {
     async function load() {
       try {
         const [h, sev, src, tl, ips, users, actions] = await Promise.all([
-          api.health(),
-          api.severity(),
-          api.sources(),
-          api.timeline(24),
-          api.topIps(8),
-          api.topUsers(8),
-          api.topActions(8),
+          api.health(), api.severity(), api.sources(),
+          api.timeline(24), api.topIps(8), api.topUsers(8), api.topActions(8),
         ]);
         if (cancelled) return;
         setHealth(h);
@@ -112,14 +85,8 @@ export default function Dashboard() {
   );
 
   if (!health) return (
-    <div className="loading">
-      <div className="loading-spinner" />
-      <div>Loading dashboard...</div>
-    </div>
+    <div className="loading"><div className="loading-spinner" /><div>Loading dashboard...</div></div>
   );
-
-  const eventsToday = health.events_stored_today ?? 0;
-  const totalInserted = health.total_events_inserted ?? 0;
 
   return (
     <div>
@@ -128,17 +95,20 @@ export default function Dashboard() {
           <h1>Dashboard</h1>
           <div className="subtitle">Real-time security monitoring overview</div>
         </div>
+        <button className="btn-secondary" onClick={() => navigate('/dashboard/edit')}>
+          <Pencil size={14} /> Customize
+        </button>
       </div>
 
       {/* Stat cards */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="label">Events Today</div>
-          <div className="value accent">{formatNumber(eventsToday)}</div>
+          <div className="value accent">{formatNumber(health.events_stored_today ?? 0)}</div>
         </div>
         <div className="stat-card">
           <div className="label">Total Ingested</div>
-          <div className="value">{formatNumber(totalInserted)}</div>
+          <div className="value">{formatNumber(health.total_events_inserted ?? 0)}</div>
         </div>
         <div className="stat-card">
           <div className="label">Buffer Usage</div>
@@ -156,13 +126,18 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Timeline - full width */}
+      {/* Timeline - full width, clickable */}
       <div className="charts-grid" style={{gridTemplateColumns: '1fr'}}>
         <div className="chart-panel">
-          <h3><Activity size={14} /> Event Timeline (24h)</h3>
+          <h3><Activity size={14} /> Event Timeline (24h) <span className="click-hint">Click a point to investigate</span></h3>
           {timeline.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={timeline}>
+              <AreaChart data={timeline} onClick={(e) => {
+                if (e?.activePayload?.[0]) {
+                  const t = e.activePayload[0].payload.time;
+                  navigate(`/events?start=${t}&end=${t + 3600000}`);
+                }
+              }} style={{cursor: 'pointer'}}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#00d4aa" stopOpacity={0.3} />
@@ -182,17 +157,18 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Severity + Sources row */}
+      {/* Severity + Sources row — clickable */}
       <div className="dashboard-row even">
         <div className="chart-panel">
-          <h3><AlertTriangle size={14} /> Events by Severity</h3>
+          <h3><AlertTriangle size={14} /> Events by Severity <span className="click-hint">Click to filter</span></h3>
           {severity.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie data={severity} dataKey="value" nameKey="name" cx="50%" cy="50%"
                      innerRadius={50} outerRadius={85} paddingAngle={2}
                      label={({ name, value }) => `${name} (${value})`} labelLine={false}
-                     style={{fontSize: 11}}>
+                     style={{fontSize: 11, cursor: 'pointer'}}
+                     onClick={(_, index) => navigate(`/events?severity=${severity[index].name}`)}>
                   {severity.map((entry, i) => (
                     <Cell key={i} fill={SEVERITY_COLORS[entry.name.toLowerCase()] || CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
@@ -204,14 +180,15 @@ export default function Dashboard() {
         </div>
 
         <div className="chart-panel">
-          <h3><Database size={14} /> Events by Source</h3>
+          <h3><Database size={14} /> Events by Source <span className="click-hint">Click to filter</span></h3>
           {sources.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={sources} layout="vertical" margin={{left: 10}}>
                 <XAxis type="number" stroke="#30363d" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis type="category" dataKey="name" stroke="#30363d" fontSize={11} width={80} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20} style={{cursor: 'pointer'}}
+                     onClick={(data) => navigate(`/events?source_type=${data.name}`)}>
                   {sources.map((entry, i) => (
                     <Cell key={i} fill={SOURCE_COLORS[entry.name] || CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
@@ -222,14 +199,16 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Top lists row */}
+      {/* Top lists row — clickable */}
       <div className="charts-grid" style={{gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'}}>
         <div className="chart-panel">
           <h3><Zap size={14} /> Top Source IPs</h3>
           {topIps.length > 0 ? (
             <ul className="top-list">
               {topIps.map(([ip, count]) => (
-                <li key={ip}><span className="ip">{ip}</span><span className="count">{count}</span></li>
+                <li key={ip} className="clickable" onClick={() => navigate(`/events?src_ip=${ip}`)}>
+                  <span className="ip">{ip}</span><span className="count">{count}</span>
+                </li>
               ))}
             </ul>
           ) : <div className="empty">No data</div>}
@@ -240,7 +219,9 @@ export default function Dashboard() {
           {topUsers.length > 0 ? (
             <ul className="top-list">
               {topUsers.map(([user, count]) => (
-                <li key={user}><span className="name">{user}</span><span className="count">{count}</span></li>
+                <li key={user} className="clickable" onClick={() => navigate(`/events?user_name=${user}`)}>
+                  <span className="name">{user}</span><span className="count">{count}</span>
+                </li>
               ))}
             </ul>
           ) : <div className="empty">No user data</div>}
@@ -251,7 +232,9 @@ export default function Dashboard() {
           {topActions.length > 0 ? (
             <ul className="top-list">
               {topActions.map(([action, count]) => (
-                <li key={action}><span className="name">{action}</span><span className="count">{count}</span></li>
+                <li key={action} className="clickable" onClick={() => navigate(`/events?action=${action}`)}>
+                  <span className="name">{action}</span><span className="count">{count}</span>
+                </li>
               ))}
             </ul>
           ) : <div className="empty">No action data</div>}

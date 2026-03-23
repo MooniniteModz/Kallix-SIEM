@@ -3,8 +3,72 @@
 #include "common/logger.h"
 
 #include <algorithm>
+#include <nlohmann/json.hpp>
 
 namespace outpost {
+
+/// Convert a CustomRuleRecord from the DB into a Rule struct for evaluation
+static Rule custom_record_to_rule(const PostgresStorageEngine::CustomRuleRecord& cr) {
+    Rule rule;
+    rule.id          = cr.id;
+    rule.name        = cr.name;
+    rule.description = cr.description;
+    rule.enabled     = cr.enabled;
+    rule.severity    = rule_severity_from_string(cr.severity);
+
+    // Type
+    if (cr.type == "sequence")       rule.type = RuleType::Sequence;
+    else if (cr.type == "valuelist") rule.type = RuleType::ValueList;
+    else                             rule.type = RuleType::Threshold;
+
+    // Filter
+    rule.filter.source_type = cr.source_type;
+    rule.filter.category    = cr.category;
+    rule.filter.action      = cr.action;
+    rule.filter.field_match = cr.field_match;
+    rule.filter.field_value = cr.field_value;
+
+    // Tags
+    try {
+        auto tags = nlohmann::json::parse(cr.tags_json);
+        for (auto& t : tags) {
+            if (t.is_string()) rule.tags.push_back(t.get<std::string>());
+        }
+    } catch (...) {}
+
+    // Type-specific config
+    try {
+        auto cfg = nlohmann::json::parse(cr.config_json);
+        if (rule.type == RuleType::Threshold) {
+            rule.threshold_config.threshold      = cfg.value("threshold", 5);
+            rule.threshold_config.window_seconds  = cfg.value("window_seconds", 300);
+            rule.threshold_config.group_by        = cfg.value("group_by", std::string("src_ip"));
+        } else if (rule.type == RuleType::Sequence) {
+            rule.sequence_config.window_seconds = cfg.value("window_seconds", 300);
+            rule.sequence_config.group_by       = cfg.value("group_by", std::string("src_ip"));
+            if (cfg.contains("steps")) {
+                for (auto& s : cfg["steps"]) {
+                    SequenceStep step;
+                    step.label = s.value("label", "");
+                    if (s.contains("filter")) {
+                        step.filter.action   = s["filter"].value("action", "");
+                        step.filter.category = s["filter"].value("category", "");
+                    }
+                    rule.sequence_config.steps.push_back(step);
+                }
+            }
+        } else if (rule.type == RuleType::ValueList) {
+            rule.valuelist_config.field = cfg.value("field", std::string("action"));
+            if (cfg.contains("values")) {
+                for (auto& v : cfg["values"]) {
+                    if (v.is_string()) rule.valuelist_config.values.insert(v.get<std::string>());
+                }
+            }
+        }
+    } catch (...) {}
+
+    return rule;
+}
 
 // Helper to get a field value from an event by name
 static std::string get_field(const Event& e, const std::string& field) {
@@ -30,19 +94,31 @@ void RuleEngine::load_rules(const std::string& rules_dir) {
     std::lock_guard<std::mutex> lock(mutex_);
     rules_ = load_rules_from_directory(rules_dir);
 
+    // Also load custom rules from database
+    auto custom = storage_.get_custom_rules();
+    for (const auto& cr : custom) {
+        rules_.push_back(custom_record_to_rule(cr));
+    }
+
     int enabled = 0;
     for (const auto& r : rules_) {
         if (r.enabled) ++enabled;
     }
-    LOG_INFO("Rule engine loaded {} rules ({} enabled)", rules_.size(), enabled);
+    LOG_INFO("Rule engine loaded {} rules ({} YAML + {} custom, {} enabled)",
+             rules_.size(), rules_.size() - custom.size(), custom.size(), enabled);
 }
 
 void RuleEngine::reload_rules(const std::string& rules_dir) {
     std::lock_guard<std::mutex> lock(mutex_);
     rules_ = load_rules_from_directory(rules_dir);
 
+    // Also load custom rules from database
+    auto custom = storage_.get_custom_rules();
+    for (const auto& cr : custom) {
+        rules_.push_back(custom_record_to_rule(cr));
+    }
+
     // Clear state for rules that no longer exist
-    // (keep state for rules that still exist to maintain window continuity)
     std::unordered_set<std::string> active_ids;
     for (const auto& r : rules_) active_ids.insert(r.id);
 
@@ -55,7 +131,8 @@ void RuleEngine::reload_rules(const std::string& rules_dir) {
         else ++it;
     }
 
-    LOG_INFO("Rule engine reloaded: {} rules", rules_.size());
+    LOG_INFO("Rule engine reloaded: {} rules ({} YAML + {} custom)",
+             rules_.size(), rules_.size() - custom.size(), custom.size());
 }
 
 void RuleEngine::evaluate(const Event& event) {

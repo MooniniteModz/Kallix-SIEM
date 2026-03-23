@@ -3,6 +3,8 @@
 #include "storage/postgres_storage_engine.h"
 #include "ingestion/ring_buffer.h"
 #include "ingestion/http_poller.h"
+#include "rules/rule_engine.h"
+#include "auth/auth.h"
 #include <httplib.h>
 #include <thread>
 #include <atomic>
@@ -15,15 +17,12 @@ struct ApiConfig {
     uint16_t    port         = 8080;
 };
 
-/// ────────────────────────────────────────────────────────────────
-/// ApiServer: REST API for querying events, viewing stats, and
-/// managing the Outpost SIEM. Serves the React frontend in
-/// production.
-/// ────────────────────────────────────────────────────────────────
 class ApiServer {
 public:
     ApiServer(PostgresStorageEngine& storage, RingBuffer<>& buffer,
-              HttpPoller& poller, const std::string& config_path,
+              HttpPoller& poller, RuleEngine& rule_engine,
+              const std::string& config_path,
+              const AuthConfig& auth_config = {},
               const ApiConfig& config = {});
     ~ApiServer();
 
@@ -33,14 +32,16 @@ public:
 private:
     void setup_routes();
 
-    httplib::Server   server_;
-    PostgresStorageEngine&    storage_;
-    RingBuffer<>&     buffer_;
-    HttpPoller&       poller_;
-    std::string       config_path_;
-    ApiConfig         config_;
-    std::thread       thread_;
-    std::atomic<bool> running_{false};
+    httplib::Server            server_;
+    PostgresStorageEngine&     storage_;
+    RingBuffer<>&              buffer_;
+    HttpPoller&                poller_;
+    RuleEngine&                rule_engine_;
+    std::string                config_path_;
+    AuthConfig                 auth_config_;
+    ApiConfig                  config_;
+    std::thread                thread_;
+    std::atomic<bool>          running_{false};
 };
 
 } // namespace outpost

@@ -11,6 +11,7 @@
 #include "rules/rule_engine.h"
 #include "storage/postgres_storage_engine.h"
 #include "api/server.h"
+#include "auth/auth.h"
 
 #include <yaml-cpp/yaml.h>
 
@@ -184,10 +185,28 @@ int main(int argc, char* argv[]) {
     RuleEngine rule_engine(storage);
     rule_engine.load_rules("./config/rules");
 
+    // Auth config
+    AuthConfig auth_config;
+    auto auth_node = config["auth"];
+    if (auth_node) {
+        auth_config.default_admin_user = auth_node["default_admin_user"] ? auth_node["default_admin_user"].as<std::string>() : "admin";
+        auth_config.default_admin_pass = auth_node["default_admin_pass"] ? auth_node["default_admin_pass"].as<std::string>() : "outpost";
+        auth_config.session_ttl_hours  = auth_node["session_ttl_hours"]  ? auth_node["session_ttl_hours"].as<int>()          : 24;
+    }
+
+    // Create default admin user if no users exist
+    if (storage.user_count() == 0) {
+        auto salt = generate_salt();
+        auto hash = hash_password(auth_config.default_admin_pass, salt);
+        storage.create_user(generate_uuid(), auth_config.default_admin_user, "admin@outpost.local", hash, salt, "admin");
+        LOG_INFO("Default admin account created (user: {}, pass: {})",
+                 auth_config.default_admin_user, auth_config.default_admin_pass);
+    }
+
     // API server
     ApiConfig api_config;
     api_config.port = 8080;
-    ApiServer api(storage, buffer, poller, config_path, api_config);
+    ApiServer api(storage, buffer, poller, rule_engine, config_path, auth_config, api_config);
 
     // ── Start everything ──
     listener.start();

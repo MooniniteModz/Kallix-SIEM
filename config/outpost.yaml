@@ -41,6 +41,12 @@ integrations:
     subscription_id: ""
     poll_interval_sec: 60
 
+# Authentication
+auth:
+  default_admin_user: "admin"
+  default_admin_pass: "outpost"
+  session_ttl_hours: 24
+
 # Parser configuration
 parsers:
   # Parser order matters: more specific parsers first
