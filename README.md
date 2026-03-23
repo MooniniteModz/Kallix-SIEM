@@ -1,6 +1,7 @@
-<img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/72e3ce98-0adb-43a9-a02f-6fb9916f86f3" />
 
-## Outpost SIEM
+<img width="30" height="30" alt="image" src="https://github.com/user-attachments/assets/72e3ce98-0adb-43a9-a02f-6fb9916f86f3" />;
+## Outpost SIEM - 
+
 ---
 
 A lightweight, self-hosted SIEM built in C++20 with a React frontend. This project aimed to provide a highly customized SIEM with no cost overhead besides compute.
