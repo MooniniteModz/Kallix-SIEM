@@ -1,4 +1,4 @@
-<img width="50" height="50" alt="image" src="https://github.com/user-attachments/assets/72e3ce98-0adb-43a9-a02f-6fb9916f86f3" />
+<img width="300" height="300" alt="image" src="https://github.com/user-attachments/assets/72e3ce98-0adb-43a9-a02f-6fb9916f86f3" />
 
 ## Outpost SIEM
 ---
