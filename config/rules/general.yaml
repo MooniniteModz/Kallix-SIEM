@@ -1,0 +1,105 @@
+rules:
+  - id: GEN-BF-001
+    name: Cross-Source Brute Force
+    description: Detects 20+ failed authentication events from any source within 5 minutes
+    severity: high
+    type: threshold
+    tags: [brute_force, cross_source, auth]
+    filter:
+      action: login_failure
+      category: auth
+    condition:
+      threshold: 20
+      window: 5m
+      group_by: src_ip
+
+  - id: GEN-PRIV-001
+    name: Privilege Escalation Attempt
+    description: Detects role or permission changes across any source
+    severity: high
+    type: valuelist
+    tags: [privilege_escalation, iam]
+    filter: {}
+    condition:
+      field: action
+      values:
+        - "role_assignment"
+        - "member_added_to_group"
+        - "account_created"
+        - "admin_role_assigned"
+        - "permission_granted"
+        - "group_membership_changed"
+
+  - id: GEN-EXFIL-001
+    name: Data Exfiltration Indicator
+    description: Detects potential data exfiltration via sharing, download, or export actions
+    severity: high
+    type: valuelist
+    tags: [data_exfiltration, dlp]
+    filter: {}
+    condition:
+      field: action
+      values:
+        - "anonymous_link_created"
+        - "file_downloaded"
+        - "bulk_download"
+        - "data_export"
+        - "external_share"
+        - "mass_file_access"
+
+  - id: GEN-MULTI-001
+    name: Multi-Source Login Anomaly
+    description: Detects 5+ login events for the same user across different sources within 10 minutes
+    severity: medium
+    type: threshold
+    tags: [anomaly, multi_source, auth]
+    filter:
+      action: login_success
+      category: auth
+    condition:
+      threshold: 5
+      window: 10m
+      group_by: user
+
+  - id: GEN-TAMPER-001
+    name: Security Log Tampering
+    description: Detects audit log clearing or security log modification across any source
+    severity: critical
+    type: valuelist
+    tags: [defense_evasion, log_tampering]
+    filter: {}
+    condition:
+      field: action
+      values:
+        - "audit_log_cleared"
+        - "log_deleted"
+        - "security_log_cleared"
+        - "diagnostic_settings_deleted"
+        - "audit_policy_changed"
+
+  - id: GEN-ACCT-001
+    name: Account Lockout Storm
+    description: Detects 10+ account lockouts within 5 minutes indicating possible attack
+    severity: high
+    type: threshold
+    tags: [brute_force, account_lockout]
+    filter:
+      action: account_locked
+    condition:
+      threshold: 10
+      window: 5m
+      group_by: src_ip
+
+  - id: GEN-IMPOSSIBLE-001
+    name: Impossible Travel Detection
+    description: Detects rapid successive logins from same user suggesting credential compromise
+    severity: critical
+    type: threshold
+    tags: [credential_compromise, impossible_travel]
+    filter:
+      action: login_success
+      category: auth
+    condition:
+      threshold: 3
+      window: 2m
+      group_by: user

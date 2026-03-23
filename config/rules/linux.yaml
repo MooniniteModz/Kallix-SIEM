@@ -1,0 +1,94 @@
+rules:
+  - id: LNX-BF-001
+    name: Linux SSH Brute Force
+    description: Detects 10+ failed SSH authentication attempts from same IP within 5 minutes
+    severity: high
+    type: threshold
+    tags: [brute_force, ssh, linux]
+    filter:
+      source_type: syslog
+      action: login_failure
+      category: auth
+    condition:
+      threshold: 10
+      window: 5m
+      group_by: src_ip
+
+  - id: LNX-ROOT-001
+    name: Root Login Detected
+    description: Detects direct root login via SSH or console
+    severity: high
+    type: threshold
+    tags: [root_access, linux]
+    filter:
+      source_type: syslog
+      action: login_success
+      field: user_name
+      value: root
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: source_host
+
+  - id: LNX-SUDO-001
+    name: Sudo Privilege Escalation
+    description: Detects sudo usage indicating privilege escalation
+    severity: medium
+    type: threshold
+    tags: [privilege_escalation, sudo, linux]
+    filter:
+      source_type: syslog
+      action: sudo_command
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: LNX-SEQ-001
+    name: SSH Brute Force Then Root
+    description: Detects SSH brute force followed by successful root login
+    severity: critical
+    type: sequence
+    tags: [credential_compromise, ssh, root_access]
+    filter:
+      source_type: syslog
+    condition:
+      window: 15m
+      group_by: src_ip
+      steps:
+        - label: SSH brute force
+          filter:
+            action: login_failure
+            category: auth
+        - label: Root login success
+          filter:
+            action: login_success
+
+  - id: LNX-CRON-001
+    name: Suspicious Cron Job
+    description: Detects new cron job creation which could indicate persistence
+    severity: medium
+    type: threshold
+    tags: [persistence, cron, linux]
+    filter:
+      source_type: syslog
+      action: cron_modified
+    condition:
+      threshold: 1
+      window: 1m
+      group_by: user
+
+  - id: LNX-FW-001
+    name: Linux Firewall Disabled
+    description: Detects firewall (iptables/ufw) being disabled or flushed
+    severity: critical
+    type: valuelist
+    tags: [defense_evasion, firewall, linux]
+    filter:
+      source_type: syslog
+    condition:
+      field: action
+      values:
+        - "firewall_disabled"
+        - "iptables_flushed"
+        - "ufw_disabled"
