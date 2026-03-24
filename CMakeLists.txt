@@ -65,11 +65,13 @@ add_library(outpost_lib STATIC
     src/ingestion/syslog_listener.cpp
     src/ingestion/ring_buffer.cpp
     src/ingestion/http_poller.cpp
+    src/ingestion/connector_manager.cpp
     src/parser/fortigate_parser.cpp
     src/parser/syslog_parser.cpp
     src/parser/windows_parser.cpp
     src/parser/m365_parser.cpp
     src/parser/azure_parser.cpp
+    src/parser/unifi_parser.cpp
     src/storage/postgres_storage_engine.cpp
     src/storage/retention.cpp
     src/rules/rule.cpp

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Shield, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
+import FirewatchLogo from '../components/FirewatchLogo';
 import { api } from '../api';
 
 export default function Login({ onLogin }) {
@@ -26,9 +27,9 @@ export default function Login({ onLogin }) {
     <div className="login-container">
       <form className="login-card" onSubmit={handleSubmit}>
         <div className="login-logo">
-          <div className="logo-icon"><Shield size={24} /></div>
+          <div className="logo-icon"><FirewatchLogo size={24} /></div>
           <div>
-            <h1>Outpost</h1>
+            <h1>Firewatch</h1>
             <span>SIEM Platform</span>
           </div>
         </div>

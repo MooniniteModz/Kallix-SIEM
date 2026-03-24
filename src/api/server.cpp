@@ -16,10 +16,12 @@ static int64_t s_start_time = 0;
 
 ApiServer::ApiServer(PostgresStorageEngine& storage, RingBuffer<>& buffer,
                      HttpPoller& poller, RuleEngine& rule_engine,
+                     ConnectorManager& connector_mgr,
                      const std::string& config_path,
                      const AuthConfig& auth_config,
                      const ApiConfig& config)
     : storage_(storage), buffer_(buffer), poller_(poller),
+      connector_mgr_(connector_mgr),
       rule_engine_(rule_engine), config_path_(config_path),
       auth_config_(auth_config), config_(config) {
     s_start_time = now_ms();
@@ -322,7 +324,9 @@ void ApiServer::setup_routes() {
             {"buffer_capacity", buffer_.capacity()},
             {"buffer_drops", buffer_.drop_count()},
             {"events_stored_today", storage_.count_today()},
-            {"total_events_inserted", storage_.total_inserted()}
+            {"total_events_inserted", storage_.total_inserted()},
+            {"active_rules", rule_engine_.rule_count()},
+            {"alerts_fired", rule_engine_.alerts_fired()}
         };
         res.set_content(health.dump(2), "application/json");
     });
@@ -863,6 +867,7 @@ void ApiServer::setup_routes() {
             }
 
             storage_.save_connector(c);
+            connector_mgr_.on_connector_changed(c.id);
             res.set_content(nlohmann::json({{"status", "ok"}, {"id", c.id}}).dump(), "application/json");
         } catch (const std::exception& e) {
             res.status = 400;
@@ -888,6 +893,7 @@ void ApiServer::setup_routes() {
             c.updated_at = now_ms();
 
             storage_.update_connector(c);
+            connector_mgr_.on_connector_changed(id);
             res.set_content(R"({"status":"ok"})", "application/json");
         } catch (const std::exception& e) {
             res.status = 400;
@@ -906,7 +912,26 @@ void ApiServer::setup_routes() {
         }
         if (id.empty()) { res.status = 400; res.set_content(R"({"error":"id required"})", "application/json"); return; }
         storage_.delete_connector(id);
+        connector_mgr_.on_connector_changed(id);
         res.set_content(R"({"status":"ok"})", "application/json");
+    });
+
+    // ── Test connection (does not require saving the connector) ──
+    server_.Post("/api/connectors/test", [this](const httplib::Request& req, httplib::Response& res) {
+        try {
+            auto body = nlohmann::json::parse(req.body);
+            auto settings = body.value("settings", nlohmann::json::object());
+            auto result = connector_mgr_.test_connection(settings);
+            res.set_content(nlohmann::json({
+                {"ok", result.ok},
+                {"status_code", result.status_code},
+                {"message", result.message},
+                {"event_count", result.event_count}
+            }).dump(), "application/json");
+        } catch (const std::exception& e) {
+            res.status = 400;
+            res.set_content(nlohmann::json({{"error", e.what()}}).dump(), "application/json");
+        }
     });
 
     server_.Get("/api/connectors/types", [](const httplib::Request&, httplib::Response& res) {

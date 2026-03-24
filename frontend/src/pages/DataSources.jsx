@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Plus, Terminal, Cloud, Server, FileText, Database as DbIcon,
-  CheckCircle, XCircle, Trash2, Edit3, X, Activity
+  CheckCircle, XCircle, Trash2, Edit3, X, Activity, Wifi, WifiOff, Loader
 } from 'lucide-react';
 import { api } from '../api';
 
@@ -20,7 +20,7 @@ const STATUS_COLORS = {
 // Type-specific default settings
 const DEFAULT_SETTINGS = {
   syslog:   { bind_address: '0.0.0.0', udp_port: 5514, tcp_port: 5514, format: 'auto' },
-  rest_api: { url: '', auth_type: 'oauth2', poll_interval_sec: 60, tenant_id: '', client_id: '', client_secret: '' },
+  rest_api: { url: '', auth_type: 'apikey', poll_interval_sec: 60, api_key: '', api_key_header: 'X-API-Key', tenant_id: '', client_id: '', client_secret: '', source_label: '' },
   webhook:  { listen_port: 9090, path: '/webhook', secret: '' },
   file_log: { path: '/var/log/messages', format: 'syslog', tail: true },
   kafka:    { brokers: '', topic: '', group_id: 'outpost', sasl_enabled: false, sasl_username: '', sasl_password: '', ssl: false },
@@ -36,6 +36,8 @@ export default function DataSources() {
   const [newSettings, setNewSettings] = useState({});
   const [editId, setEditId] = useState(null);
   const [health, setHealth] = useState(null);
+  const [testResult, setTestResult] = useState(null);
+  const [testing, setTesting] = useState(false);
 
   async function load() {
     try {
@@ -50,6 +52,18 @@ export default function DataSources() {
 
   function startAdd() {
     setShowAdd(true); setAddStep(1); setNewType(''); setNewName(''); setNewSettings({});
+    setTestResult(null); setTesting(false);
+  }
+
+  async function handleTest() {
+    setTesting(true); setTestResult(null);
+    try {
+      const result = await api.testConnector(newSettings);
+      setTestResult(result);
+    } catch (e) {
+      setTestResult({ ok: false, message: e.message });
+    }
+    setTesting(false);
   }
 
   function selectType(type) {
@@ -77,6 +91,7 @@ export default function DataSources() {
     setNewType(c.type);
     setNewName(c.name);
     setNewSettings(c.settings || {});
+    setTestResult(null); setTesting(false);
     setShowAdd(true);
     setAddStep(2);
   }
@@ -152,10 +167,29 @@ export default function DataSources() {
               {newType === 'file_log' && <FileLogForm settings={newSettings} onChange={setNewSettings} />}
               {newType === 'kafka' && <KafkaForm settings={newSettings} onChange={setNewSettings} />}
 
+              {/* Test connection result */}
+              {testResult && (
+                <div style={{
+                  marginTop: 12, padding: 12, borderRadius: 8, fontSize: 13,
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  background: testResult.ok ? 'rgba(63,185,80,0.1)' : 'rgba(248,81,73,0.1)',
+                  border: `1px solid ${testResult.ok ? 'var(--green)' : 'var(--red)'}`,
+                  color: testResult.ok ? 'var(--green)' : 'var(--red)',
+                }}>
+                  {testResult.ok ? <CheckCircle size={16} /> : <XCircle size={16} />}
+                  <span>{testResult.message}</span>
+                </div>
+              )}
+
               <div style={{display: 'flex', gap: 8, marginTop: 16}}>
                 <button className="btn-primary" onClick={saveConnector}>
                   {editId ? 'Update' : 'Create'} Connector
                 </button>
+                {newType === 'rest_api' && (
+                  <button className="btn-secondary" onClick={handleTest} disabled={testing || !newSettings.url}>
+                    {testing ? <><Loader size={14} className="spin" /> Testing...</> : <><Wifi size={14} /> Test Connection</>}
+                  </button>
+                )}
                 {!editId && <button className="btn-secondary" onClick={() => setAddStep(1)}>Back</button>}
               </div>
             </div>
@@ -202,8 +236,8 @@ export default function DataSources() {
 
                   <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
                     <span style={{color: STATUS_COLORS[c.status] || 'var(--text-muted)', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4}}>
-                      {c.enabled ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                      {c.enabled ? 'Active' : 'Stopped'}
+                      {c.status === 'running' ? <Wifi size={14} /> : c.enabled ? <WifiOff size={14} /> : <XCircle size={14} />}
+                      {c.status === 'running' ? 'Running' : c.enabled ? 'Pending' : 'Stopped'}
                     </span>
                     <label className="toggle" style={{margin: 0}}>
                       <input type="checkbox" checked={c.enabled} onChange={() => toggleEnabled(c)} />
@@ -260,6 +294,7 @@ function RestApiForm({ settings, onChange }) {
       <select value={settings.auth_type || 'oauth2'} onChange={e => set('auth_type', e.target.value)}>
         <option value="oauth2">OAuth2 Client Credentials</option>
         <option value="apikey">API Key</option>
+        <option value="bearer">Bearer Token</option>
         <option value="basic">Basic Auth</option>
         <option value="none">None</option>
       </select>
@@ -269,14 +304,19 @@ function RestApiForm({ settings, onChange }) {
       <SettingsField label="Client ID" value={settings.client_id} onChange={v => set('client_id', v)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
       <SettingsField label="Client Secret" value={settings.client_secret} onChange={v => set('client_secret', v)} type="password" />
     </>)}
-    {settings.auth_type === 'apikey' && (
+    {settings.auth_type === 'apikey' && (<>
       <SettingsField label="API Key" value={settings.api_key} onChange={v => set('api_key', v)} type="password" />
+      <SettingsField label="Header Name" value={settings.api_key_header || 'X-API-Key'} onChange={v => set('api_key_header', v)} placeholder="X-API-Key" />
+    </>)}
+    {settings.auth_type === 'bearer' && (
+      <SettingsField label="Bearer Token" value={settings.bearer_token} onChange={v => set('bearer_token', v)} type="password" />
     )}
     {settings.auth_type === 'basic' && (<>
       <SettingsField label="Username" value={settings.username} onChange={v => set('username', v)} />
       <SettingsField label="Password" value={settings.password} onChange={v => set('password', v)} type="password" />
     </>)}
     <SettingsField label="Poll Interval (seconds)" value={settings.poll_interval_sec} onChange={v => set('poll_interval_sec', v)} type="number" />
+    <SettingsField label="Source Label" value={settings.source_label} onChange={v => set('source_label', v)} placeholder="e.g. unifi, sentinelone, crowdstrike" />
   </>);
 }
 

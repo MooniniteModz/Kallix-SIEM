@@ -12,6 +12,7 @@ enum class SourceType : uint8_t {
     Windows,
     M365,
     Azure,
+    UniFi,
     Syslog,
     Unknown
 };

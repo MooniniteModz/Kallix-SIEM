@@ -115,6 +115,7 @@ export const api = {
   createConnector:  (data) => postJson('/connectors', data),
   updateConnector:  (data) => putJson('/connectors', data),
   deleteConnector:  (id) => deleteJson('/connectors', { id }),
+  testConnector:    (settings) => postJson('/connectors/test', { settings }),
 
   // User management
   listUsers:    () => fetchJson('/users'),

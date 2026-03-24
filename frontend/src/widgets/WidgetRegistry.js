@@ -5,7 +5,7 @@ export const WIDGET_TYPES = {
     dataSources: ['health'],
     fields: [
       { key: 'field', label: 'Metric', type: 'select',
-        options: ['events_stored_today', 'total_events_inserted', 'buffer_usage', 'buffer_drops', 'uptime_ms'] },
+        options: ['events_stored_today', 'total_events_inserted', 'buffer_usage', 'buffer_drops', 'uptime_ms', 'active_rules', 'alerts_fired'] },
     ],
   },
   area_chart: {
@@ -37,7 +37,7 @@ export const WIDGET_TYPES = {
     ],
   },
   geo_map: {
-    name: 'Geo Map',
+    name: '3D Globe',
     icon: 'Globe',
     dataSources: ['_self'],
     fields: [],
@@ -70,9 +70,9 @@ export const DEFAULT_DASHBOARD = {
   widgets: [
     { id: 'w1', type: 'stat_card', title: 'Events Today', dataSource: 'health', params: { field: 'events_stored_today' }, size: 'quarter', order: 0 },
     { id: 'w2', type: 'stat_card', title: 'Total Ingested', dataSource: 'health', params: { field: 'total_events_inserted' }, size: 'quarter', order: 1 },
-    { id: 'w3', type: 'stat_card', title: 'Buffer Usage', dataSource: 'health', params: { field: 'buffer_usage' }, size: 'quarter', order: 2 },
-    { id: 'w4', type: 'stat_card', title: 'Uptime', dataSource: 'health', params: { field: 'uptime_ms' }, size: 'quarter', order: 3 },
-    { id: 'w5', type: 'geo_map', title: 'Geospatial Overview', dataSource: '_self', params: {}, size: 'full', height: 480, order: 4 },
+    { id: 'w3', type: 'stat_card', title: 'Alerts Fired', dataSource: 'health', params: { field: 'alerts_fired' }, size: 'quarter', order: 2 },
+    { id: 'w4', type: 'stat_card', title: 'Active Rules', dataSource: 'health', params: { field: 'active_rules' }, size: 'quarter', order: 3 },
+    { id: 'w5', type: 'geo_map', title: '3D Globe', dataSource: '_self', params: {}, size: 'full', height: 520, order: 4 },
     { id: 'w6', type: 'area_chart', title: 'Event Timeline (24h)', dataSource: 'timeline', params: { hours: 24 }, size: 'full', order: 5 },
     { id: 'w7', type: 'pie_chart', title: 'Events by Severity', dataSource: 'severity', params: {}, size: 'half', order: 6 },
     { id: 'w8', type: 'bar_chart', title: 'Events by Source', dataSource: 'sources', params: {}, size: 'half', order: 7 },

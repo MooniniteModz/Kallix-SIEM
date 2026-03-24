@@ -92,22 +92,33 @@ public:
     }
 
     /// Try to pop a message. Returns nullopt if buffer is empty.
-    /// Only safe for a single consumer thread.
+    /// Thread-safe for multiple consumers.
     std::optional<RawMessage> try_pop() {
         size_t tail = tail_.load(std::memory_order_relaxed);
-        Slot& slot = slots_[tail & MASK];
-        size_t seq = slot.sequence.load(std::memory_order_acquire);
-        intptr_t diff = static_cast<intptr_t>(seq) - static_cast<intptr_t>(tail + 1);
 
-        if (diff == 0) {
-            // Data is ready
-            RawMessage msg = slot.message;
-            slot.sequence.store(tail + N, std::memory_order_release);
-            tail_.store(tail + 1, std::memory_order_relaxed);
-            return msg;
+        for (;;) {
+            Slot& slot = slots_[tail & MASK];
+            size_t seq = slot.sequence.load(std::memory_order_acquire);
+            intptr_t diff = static_cast<intptr_t>(seq) - static_cast<intptr_t>(tail + 1);
+
+            if (diff == 0) {
+                // Data is ready; try to claim this slot
+                if (tail_.compare_exchange_weak(tail, tail + 1,
+                        std::memory_order_relaxed, std::memory_order_relaxed)) {
+                    // Claimed. Copy data then release slot.
+                    RawMessage msg = slot.message;
+                    slot.sequence.store(tail + N, std::memory_order_release);
+                    return msg;
+                }
+                // CAS failed, another consumer claimed it. tail reloaded, retry.
+            } else if (diff < 0) {
+                // Empty
+                return std::nullopt;
+            } else {
+                // Slot not yet published; reload tail
+                tail = tail_.load(std::memory_order_relaxed);
+            }
         }
-        // Empty
-        return std::nullopt;
     }
 
     /// Approximate count of items in the buffer

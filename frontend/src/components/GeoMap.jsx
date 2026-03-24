@@ -376,7 +376,7 @@ export default function GeoMap({ embeddedHeight, hideHeader } = {}) {
             <ComposableMap
               projection="geoAlbersUsa"
               projectionConfig={{ scale: 1000 }}
-              style={{ width: '100%', height: 'auto', background: 'transparent' }}
+              style={{ width: '100%', height: '100%', background: 'transparent' }}
             >
               <ZoomableGroup>
                 <MapGeographies />

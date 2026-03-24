@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import {
-  Shield, LayoutDashboard, List, Bell, Settings as SettingsIcon,
-  Database, BookOpen, LogOut, FileText
+  LayoutDashboard, List, Bell, Settings as SettingsIcon,
+  Database, BookOpen, LogOut, FileText, User
 } from 'lucide-react';
+import FirewatchLogo from './components/FirewatchLogo';
 import Dashboard from './pages/Dashboard';
 import DashboardBuilder from './pages/DashboardBuilder';
 import Events from './pages/Events';
@@ -70,9 +71,9 @@ function App() {
       <div className="app">
         <nav className="sidebar">
           <div className="sidebar-logo">
-            <div className="logo-icon"><Shield size={18} /></div>
+            <div className="logo-icon"><FirewatchLogo size={18} /></div>
             <div>
-              <h1>Outpost</h1>
+              <h1>Firewatch</h1>
               <span className="version">SIEM v0.3.0</span>
             </div>
           </div>
@@ -94,6 +95,7 @@ function App() {
 
           <div className="sidebar-footer">
             <div className="sidebar-user">
+              <span className="sidebar-user-icon"><User size={16} /></span>
               <span className="sidebar-username">{user.username}</span>
               <button className="btn-logout" onClick={handleLogout} title="Sign out">
                 <LogOut size={14} />

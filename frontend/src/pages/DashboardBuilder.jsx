@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Plus, Save, ArrowLeft, ChevronUp, ChevronDown, X, Settings
+  Plus, Save, ArrowLeft, X, Settings, GripVertical
 } from 'lucide-react';
 import WidgetRenderer from '../widgets/WidgetRenderer';
 import { WIDGET_TYPES, DATA_SOURCE_LABELS, SIZE_OPTIONS, DEFAULT_DASHBOARD } from '../widgets/WidgetRegistry';
@@ -24,10 +24,10 @@ function newWidgetId() { return `w_${widgetIdCounter++}`; }
 
 // Map column-span thresholds (fraction of 12-col grid) to size names
 const SIZE_BREAKPOINTS = [
-  { maxFrac: 0.29, size: 'quarter' },  // ≤3.5 cols  → quarter (3)
-  { maxFrac: 0.42, size: 'third' },    // ≤5 cols    → third   (4)
-  { maxFrac: 0.67, size: 'half' },     // ≤8 cols    → half    (6)
-  { maxFrac: 1.00, size: 'full' },     //            → full   (12)
+  { maxFrac: 0.29, size: 'quarter' },
+  { maxFrac: 0.42, size: 'third' },
+  { maxFrac: 0.67, size: 'half' },
+  { maxFrac: 1.00, size: 'full' },
 ];
 
 function fracToSize(frac) {
@@ -51,8 +51,10 @@ export default function DashboardBuilder() {
   const [addSize, setAddSize] = useState('half');
   const [addParams, setAddParams] = useState({});
 
-  // Resize state
-  const resizeRef = useRef(null);
+  // Drag-and-drop state
+  const [dragIdx, setDragIdx] = useState(null);
+  const [dropIdx, setDropIdx] = useState(null);
+  const dragImageRef = useRef(null);
 
   // Fetch data for all widgets
   useEffect(() => {
@@ -89,15 +91,6 @@ export default function DashboardBuilder() {
   function handleReset() {
     setDashboard(DEFAULT_DASHBOARD);
     saveDashboard(DEFAULT_DASHBOARD);
-  }
-
-  function moveWidget(idx, dir) {
-    const widgets = [...dashboard.widgets];
-    const newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= widgets.length) return;
-    [widgets[idx], widgets[newIdx]] = [widgets[newIdx], widgets[idx]];
-    widgets.forEach((w, i) => w.order = i);
-    setDashboard({ ...dashboard, widgets });
   }
 
   function removeWidget(idx) {
@@ -153,6 +146,49 @@ export default function DashboardBuilder() {
     setDashboard({ ...dashboard, widgets });
     setShowAddModal(false);
   }
+
+  // ── Drag and drop ──
+  const handleDragStart = useCallback((e, idx) => {
+    setDragIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+    // Use a minimal drag image so the default ghost isn't huge
+    if (dragImageRef.current) {
+      e.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e, idx) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragIdx === null || idx === dragIdx) {
+      setDropIdx(null);
+      return;
+    }
+    setDropIdx(idx);
+  }, [dragIdx]);
+
+  const handleDrop = useCallback((e, idx) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === idx) {
+      setDragIdx(null);
+      setDropIdx(null);
+      return;
+    }
+    setDashboard(prev => {
+      const widgets = [...prev.widgets];
+      const [dragged] = widgets.splice(dragIdx, 1);
+      widgets.splice(idx, 0, dragged);
+      widgets.forEach((w, i) => w.order = i);
+      return { ...prev, widgets };
+    });
+    setDragIdx(null);
+    setDropIdx(null);
+  }, [dragIdx]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragIdx(null);
+    setDropIdx(null);
+  }, []);
 
   // ── Resize handlers ──
   const startResizeWidth = useCallback((e, idx) => {
@@ -260,10 +296,13 @@ export default function DashboardBuilder() {
 
   return (
     <div>
+      {/* Hidden drag ghost image */}
+      <div ref={dragImageRef} style={{ position: 'fixed', top: -100, left: -100, width: 1, height: 1 }} />
+
       <div className="page-header">
         <div>
           <h1>Customize Dashboard</h1>
-          <div className="subtitle">Add, remove, reorder, and resize widgets</div>
+          <div className="subtitle">Drag to reorder, drag edges to resize</div>
         </div>
         <div style={{display: 'flex', gap: 8}}>
           <button className="btn-secondary" onClick={() => navigate('/')}><ArrowLeft size={14} /> Back</button>
@@ -274,7 +313,6 @@ export default function DashboardBuilder() {
 
       <div style={{marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center'}}>
         <button className="btn-secondary" onClick={openAdd}><Plus size={14} /> Add Widget</button>
-        <span style={{fontSize: 11, color: 'var(--text-muted)'}}>Drag edges to resize widgets</span>
       </div>
 
       {/* Add/Edit modal */}
@@ -343,16 +381,29 @@ export default function DashboardBuilder() {
       <div className="widget-grid">
         {sorted.map((widget, idx) => {
           const sizeClass = `widget-${widget.size || 'half'}`;
-          const heightStyle = widget.height ? { height: widget.height, overflow: 'hidden' } : {};
+          const isGlobe = widget.type === 'geo_map';
+          const heightStyle = widget.height ? { height: widget.height, overflow: isGlobe ? 'visible' : 'hidden' } : {};
+          const isDragging = dragIdx === idx;
+          const isDropTarget = dropIdx === idx;
           return (
-            <div key={widget.id} className={`chart-panel widget-card widget-resizable ${sizeClass}`} style={heightStyle}>
+            <div
+              key={widget.id}
+              className={`chart-panel widget-card widget-resizable ${sizeClass}${isDragging ? ' widget-dragging' : ''}${isDropTarget ? ' widget-drop-target' : ''}`}
+              style={heightStyle}
+              draggable
+              onDragStart={e => handleDragStart(e, idx)}
+              onDragOver={e => handleDragOver(e, idx)}
+              onDrop={e => handleDrop(e, idx)}
+              onDragEnd={handleDragEnd}
+            >
               <div className="widget-header">
-                <h3 style={{margin: 0, fontSize: 13}}>{widget.title}
+                <div className="widget-drag-handle">
+                  <GripVertical size={14} />
+                </div>
+                <h3 style={{margin: 0, fontSize: 13, flex: 1}}>{widget.title}
                   <span className="widget-size-badge">{widget.size || 'half'}{widget.height ? ` · ${widget.height}px` : ''}</span>
                 </h3>
                 <div className="widget-actions">
-                  <button className="btn-icon-sm" onClick={() => moveWidget(idx, -1)} disabled={idx === 0}><ChevronUp size={12} /></button>
-                  <button className="btn-icon-sm" onClick={() => moveWidget(idx, 1)} disabled={idx === sorted.length - 1}><ChevronDown size={12} /></button>
                   <button className="btn-icon-sm" onClick={() => openEdit(widget, idx)}><Settings size={12} /></button>
                   <button className="btn-icon-sm danger" onClick={() => removeWidget(idx)}><X size={12} /></button>
                 </div>

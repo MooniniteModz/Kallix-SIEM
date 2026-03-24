@@ -3,10 +3,12 @@
 #include "ingestion/ring_buffer.h"
 #include "ingestion/syslog_listener.h"
 #include "ingestion/http_poller.h"
+#include "ingestion/connector_manager.h"
 #include "parser/fortigate_parser.h"
 #include "parser/windows_parser.h"
 #include "parser/m365_parser.h"
 #include "parser/azure_parser.h"
+#include "parser/unifi_parser.h"
 #include "parser/syslog_parser.h"
 #include "rules/rule_engine.h"
 #include "storage/postgres_storage_engine.h"
@@ -151,6 +153,7 @@ int main(int argc, char* argv[]) {
     parsers.push_back(std::make_unique<WindowsParser>());
     parsers.push_back(std::make_unique<M365Parser>());
     parsers.push_back(std::make_unique<AzureParser>());
+    parsers.push_back(std::make_unique<UniFiParser>());
     parsers.push_back(std::make_unique<SyslogParser>());  // catch-all last
 
     // Syslog listener
@@ -181,6 +184,9 @@ int main(int argc, char* argv[]) {
     }
     HttpPoller poller(buffer, poller_config);
 
+    // Connector manager (generic REST API polling for DB-configured connectors)
+    ConnectorManager connector_mgr(buffer, storage);
+
     // Rule engine
     RuleEngine rule_engine(storage);
     rule_engine.load_rules("./config/rules");
@@ -206,11 +212,12 @@ int main(int argc, char* argv[]) {
     // API server
     ApiConfig api_config;
     api_config.port = 8080;
-    ApiServer api(storage, buffer, poller, rule_engine, config_path, auth_config, api_config);
+    ApiServer api(storage, buffer, poller, rule_engine, connector_mgr, config_path, auth_config, api_config);
 
     // ── Start everything ──
     listener.start();
     poller.start();
+    connector_mgr.start();
     api.start();
 
     // Parser worker threads
@@ -254,6 +261,7 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Shutting down...");
     listener.stop();
     poller.stop();
+    connector_mgr.stop();
     api.stop();
 
     for (auto& t : parser_threads) {

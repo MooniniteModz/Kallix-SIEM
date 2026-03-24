@@ -8,6 +8,7 @@ std::string to_string(SourceType t) {
         case SourceType::Windows:   return "windows";
         case SourceType::M365:      return "m365";
         case SourceType::Azure:     return "azure";
+        case SourceType::UniFi:     return "unifi";
         case SourceType::Syslog:    return "syslog";
         default:                    return "unknown";
     }
@@ -51,6 +52,7 @@ SourceType source_type_from_string(const std::string& s) {
     if (s == "windows")   return SourceType::Windows;
     if (s == "m365")      return SourceType::M365;
     if (s == "azure")     return SourceType::Azure;
+    if (s == "unifi")     return SourceType::UniFi;
     if (s == "syslog")    return SourceType::Syslog;
     return SourceType::Unknown;
 }
@@ -103,7 +105,7 @@ nlohmann::json event_to_json(const Event& e) {
         {"dst_ip",      e.dst_ip},
         {"src_port",    e.src_port},
         {"dst_port",    e.dst_port},
-        {"user",        e.user},
+        {"user_name",   e.user},
         {"user_agent",  e.user_agent},
         {"resource",    e.resource},
         {"raw",         e.raw},

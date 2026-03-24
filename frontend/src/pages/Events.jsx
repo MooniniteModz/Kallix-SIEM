@@ -11,7 +11,7 @@ const SEVERITY_CLASS = {
 
 const SOURCE_CLASS = {
   azure: 'azure', m365: 'm365', fortigate: 'fortigate',
-  windows: 'windows', syslog: 'syslog', unknown: 'unknown',
+  windows: 'windows', unifi: 'unifi', syslog: 'syslog', unknown: 'unknown',
 };
 
 function formatTs(ms) {
@@ -249,6 +249,43 @@ export default function Events() {
           <div className="empty">No events found{searchTerm ? ` matching "${searchTerm}"` : ''}</div>
         ) : (
           <>
+            <div className="events-summary-bar">
+              <div className="events-summary-stat">
+                <span className="events-summary-value">{total.toLocaleString()}</span>
+                <span className="events-summary-label">Total Events</span>
+              </div>
+              {(() => {
+                const sevCounts = {};
+                events.forEach(e => {
+                  const s = (e.severity || 'info').toLowerCase();
+                  sevCounts[s] = (sevCounts[s] || 0) + 1;
+                });
+                return Object.entries(sevCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([sev, count]) => (
+                    <div key={sev} className="events-summary-stat clickable" onClick={() => updateFilter('severity', sev)}>
+                      <span className={`badge ${SEVERITY_CLASS[sev] || 'info'}`} style={{fontSize: 11}}>{count}</span>
+                      <span className="events-summary-label">{sev}</span>
+                    </div>
+                  ));
+              })()}
+              {(() => {
+                const srcCounts = {};
+                events.forEach(e => {
+                  const s = e.source_type || 'unknown';
+                  srcCounts[s] = (srcCounts[s] || 0) + 1;
+                });
+                return Object.entries(srcCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([src, count]) => (
+                    <div key={src} className="events-summary-stat clickable" onClick={() => updateFilter('source_type', src)}>
+                      <span className={`source-badge ${SOURCE_CLASS[src?.toLowerCase()] || 'unknown'}`} style={{fontSize: 11}}>{count}</span>
+                      <span className="events-summary-label">{src}</span>
+                    </div>
+                  ));
+              })()}
+            </div>
+
             <table>
               <thead>
                 <tr>
@@ -256,8 +293,7 @@ export default function Events() {
                   <th>Time</th>
                   <th>Source</th>
                   <th>Severity</th>
-                  <th>Category</th>
-                  <th>Action</th>
+                  <th>Description</th>
                   <th>Src IP</th>
                   <th>User</th>
                 </tr>
@@ -280,8 +316,14 @@ export default function Events() {
                           {e.severity}
                         </span>
                       </td>
-                      <td>{e.category}</td>
-                      <td style={{maxWidth: 200}}>{e.action}</td>
+                      <td style={{maxWidth: 320}}>
+                        <div className="event-desc-cell">
+                          <span className="event-action">{e.action || e.category}</span>
+                          {e.resource && !e.resource.startsWith('{') && (
+                            <span className="event-resource">{e.resource.length > 60 ? e.resource.slice(0, 60) + '...' : e.resource}</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="mono">
                         {e.src_ip && (
                           <span className="investigate-link" onClick={(ev) => {
@@ -301,7 +343,7 @@ export default function Events() {
                     </tr>
                     {expanded === e.event_id && (
                       <tr>
-                        <td colSpan={8} style={{padding: 0}}>
+                        <td colSpan={7} style={{padding: 0}}>
                           <div className="event-detail">
                             <div className="event-detail-grid">
                               <div className="detail-item"><span className="detail-label">Event ID</span><span className="detail-value mono">{e.event_id}</span></div>
@@ -323,8 +365,22 @@ export default function Events() {
                                   : '—'}</span>
                               </div>
                               <div className="detail-item"><span className="detail-label">Source Host</span><span className="detail-value">{e.source_host || '—'}</span></div>
-                              <div className="detail-item"><span className="detail-label">Resource</span><span className="detail-value">{e.resource || '—'}</span></div>
+                              {e.resource && !e.resource.startsWith('{') && (
+                                <div className="detail-item"><span className="detail-label">Resource</span><span className="detail-value">{e.resource}</span></div>
+                              )}
                             </div>
+                            {e.metadata && Object.keys(e.metadata).length > 0 && (
+                              <details className="raw-section">
+                                <summary>Metadata</summary>
+                                <pre className="expanded-row">{JSON.stringify(e.metadata, null, 2)}</pre>
+                              </details>
+                            )}
+                            {e.resource && e.resource.startsWith('{') && (
+                              <details className="raw-section">
+                                <summary>Resource Data</summary>
+                                <pre className="expanded-row">{prettyRaw(e.resource)}</pre>
+                              </details>
+                            )}
                             <details className="raw-section">
                               <summary>Raw Event Data</summary>
                               <pre className="expanded-row">{prettyRaw(e.raw)}</pre>
@@ -340,7 +396,7 @@ export default function Events() {
 
             <div className="pagination">
               <span className="page-info">
-                Showing {offset + 1}&ndash;{offset + events.length}
+                Showing {offset + 1}&ndash;{offset + events.length} of {total.toLocaleString()}
                 {hasActiveFilters && <> (filtered)</>}
               </span>
               <button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>Previous</button>

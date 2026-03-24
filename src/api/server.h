@@ -3,6 +3,7 @@
 #include "storage/postgres_storage_engine.h"
 #include "ingestion/ring_buffer.h"
 #include "ingestion/http_poller.h"
+#include "ingestion/connector_manager.h"
 #include "rules/rule_engine.h"
 #include "auth/auth.h"
 #include <httplib.h>
@@ -21,6 +22,7 @@ class ApiServer {
 public:
     ApiServer(PostgresStorageEngine& storage, RingBuffer<>& buffer,
               HttpPoller& poller, RuleEngine& rule_engine,
+              ConnectorManager& connector_mgr,
               const std::string& config_path,
               const AuthConfig& auth_config = {},
               const ApiConfig& config = {});
@@ -36,6 +38,7 @@ private:
     PostgresStorageEngine&     storage_;
     RingBuffer<>&              buffer_;
     HttpPoller&                poller_;
+    ConnectorManager&          connector_mgr_;
     RuleEngine&                rule_engine_;
     std::string                config_path_;
     AuthConfig                 auth_config_;

@@ -18,7 +18,7 @@ const TYPE_ICONS = {
 
 const SEVERITIES = ['critical', 'high', 'medium', 'low'];
 const RULE_TYPES = ['threshold', 'sequence', 'valuelist'];
-const SOURCE_TYPES = ['', 'windows', 'azure', 'm365', 'fortigate', 'syslog'];
+const SOURCE_TYPES = ['', 'windows', 'azure', 'm365', 'fortigate', 'unifi', 'syslog'];
 const GROUP_BY_OPTIONS = ['src_ip', 'user', 'source_host', 'action', 'category'];
 const VALUELIST_FIELDS = ['action', 'src_ip', 'user_name', 'category', 'source_type'];
 
