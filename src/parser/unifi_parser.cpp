@@ -26,6 +26,10 @@ std::optional<Event> UniFiParser::parse(const RawMessage& raw) {
     std::string line = raw.as_string();
     if (line.empty() || line[0] != '{') return std::nullopt;
 
+    // ── Check source hint first — connector told us this is UniFi ──
+    std::string hint(raw.source_hint);
+    bool hint_unifi = (hint == "unifi" || hint == "UniFi" || hint == "Unifi");
+
     nlohmann::json j;
     try {
         j = nlohmann::json::parse(line);
@@ -36,20 +40,32 @@ std::optional<Event> UniFiParser::parse(const RawMessage& raw) {
     if (!j.is_object()) return std::nullopt;
 
     // ── Detect UniFi host/device objects ──
-    // UniFi hosts have fields like: id, hardwareId, type, ipAddress,
-    // lastConnectionStateChange, firmwareVersion, model, name, etc.
     bool is_host = j.contains("hardwareId") || j.contains("firmwareVersion") ||
                    (j.contains("id") && j.contains("type") &&
                     (j.contains("ipAddress") || j.contains("ip")));
 
     // ── Detect UniFi alert/event objects ──
-    // UniFi alerts/events may have: key, msg, datetime, site_id
     bool is_alert = j.contains("key") && (j.contains("msg") || j.contains("datetime"));
 
     // ── Detect UniFi site objects ──
     bool is_site = j.contains("siteId") || (j.contains("meta") && j.contains("statistics"));
 
-    if (!is_host && !is_alert && !is_site) return std::nullopt;
+    // ── Detect UniFi network/config objects ──
+    // Network configs: purpose, site_id, networkgroup, override_inform_host
+    // Client objects: mac, hostname, oui, network_id, usergroup_id
+    // Settings: setting_preference, key (without msg)
+    bool is_network = j.contains("site_id") && (j.contains("purpose") ||
+                      j.contains("networkgroup") || j.contains("dhcpd_enabled") ||
+                      j.contains("ip_subnet") || j.contains("override_inform_host"));
+
+    bool is_client = j.contains("mac") && (j.contains("oui") || j.contains("network_id") ||
+                     j.contains("usergroup_id") || j.contains("hostname"));
+
+    // If source hint says unifi, accept any JSON from this connector
+    bool is_hinted = hint_unifi && !is_host && !is_alert && !is_site && !is_network && !is_client;
+
+    if (!is_host && !is_alert && !is_site && !is_network && !is_client && !is_hinted)
+        return std::nullopt;
 
     Event event;
     event.event_id    = generate_uuid();
@@ -168,6 +184,58 @@ std::optional<Event> UniFiParser::parse(const RawMessage& raw) {
             event.metadata["latitude"]  = j["latitude"];
             event.metadata["longitude"] = j["longitude"];
         }
+
+    } else if (is_network) {
+        // ── Parse network/VLAN config data ──
+        std::string net_name = j.value("name", "");
+        std::string purpose  = j.value("purpose", "");
+        std::string subnet   = j.value("ip_subnet", "");
+        std::string site_id  = j.value("site_id", "");
+
+        event.action   = "network_config";
+        event.category = Category::Network;
+        event.severity = Severity::Info;
+        event.resource = net_name.empty() ? purpose : net_name;
+        event.timestamp = now_ms();
+
+        event.metadata = j;
+        event.metadata["site_id"] = site_id;
+        if (!subnet.empty()) event.metadata["subnet"] = subnet;
+
+    } else if (is_client) {
+        // ── Parse client/station data ──
+        std::string hostname = j.value("hostname", j.value("name", ""));
+        std::string mac      = j.value("mac", "");
+        std::string ip       = j.value("ip", j.value("last_ip", ""));
+        std::string oui      = j.value("oui", "");
+        bool is_wired        = j.value("is_wired", false);
+
+        event.action   = "client_report";
+        event.category = Category::Network;
+        event.severity = Severity::Info;
+        event.src_ip   = ip;
+        event.resource = hostname.empty() ? mac : hostname;
+        event.timestamp = now_ms();
+
+        event.metadata = j;
+        event.metadata["mac"]      = mac;
+        event.metadata["oui"]      = oui;
+        event.metadata["is_wired"] = is_wired;
+
+    } else if (is_hinted) {
+        // ── Generic UniFi object (source hint matched) ──
+        std::string name = j.value("name", j.value("_id", j.value("id", "")));
+
+        event.action   = "api_event";
+        event.category = Category::Network;
+        event.severity = Severity::Info;
+        event.resource = name;
+        event.timestamp = now_ms();
+
+        if (j.contains("ip") || j.contains("ipAddress"))
+            event.src_ip = j.value("ip", j.value("ipAddress", ""));
+
+        event.metadata = j;
     }
 
     return event;

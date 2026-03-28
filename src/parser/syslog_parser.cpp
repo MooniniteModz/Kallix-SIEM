@@ -12,6 +12,18 @@ std::optional<Event> SyslogParser::parse(const RawMessage& raw) {
     std::string line = raw.as_string();
     if (line.empty()) return std::nullopt;
 
+    // JSON objects are never syslog — reject immediately
+    if (line[0] == '{' || line[0] == '[') return std::nullopt;
+
+    // If this message came from a connector with a source hint,
+    // only claim it if explicitly marked as syslog
+    if (raw.source_hint[0] != '\0') {
+        std::string hint(raw.source_hint);
+        if (hint != "syslog") {
+            return std::nullopt;
+        }
+    }
+
     Event event;
     event.event_id    = generate_uuid();
     event.received_at = now_ms();

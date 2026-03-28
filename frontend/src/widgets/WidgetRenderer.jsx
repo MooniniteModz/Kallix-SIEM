@@ -12,9 +12,13 @@ const SEVERITY_COLORS = {
 };
 
 const SOURCE_COLORS = {
-  Azure: '#58a6ff', M365: '#bc8cff', FortiGate: '#db6d28',
-  Windows: '#79c0ff', UniFi: '#00d4aa', unifi: '#00d4aa',
-  Syslog: '#3fb950', Unknown: '#8b949e',
+  Azure: '#58a6ff', azure: '#58a6ff',
+  M365: '#bc8cff', m365: '#bc8cff',
+  FortiGate: '#db6d28', fortigate: '#db6d28',
+  Windows: '#79c0ff', windows: '#79c0ff',
+  UniFi: '#00d4aa', unifi: '#00d4aa',
+  Syslog: '#3fb950', syslog: '#3fb950',
+  Unknown: '#8b949e', unknown: '#8b949e',
 };
 
 const CHART_COLORS = ['#00d4aa', '#58a6ff', '#bc8cff', '#db6d28', '#d29922', '#f85149', '#3fb950', '#79c0ff'];

@@ -381,8 +381,7 @@ export default function DashboardBuilder() {
       <div className="widget-grid">
         {sorted.map((widget, idx) => {
           const sizeClass = `widget-${widget.size || 'half'}`;
-          const isGlobe = widget.type === 'geo_map';
-          const heightStyle = widget.height ? { height: widget.height, overflow: isGlobe ? 'visible' : 'hidden' } : {};
+          const heightStyle = widget.height ? { height: widget.height, overflow: 'hidden' } : {};
           const isDragging = dragIdx === idx;
           const isDropTarget = dropIdx === idx;
           return (

@@ -15,6 +15,7 @@
 #include "api/server.h"
 #include "auth/auth.h"
 
+#include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>
 
 #include <atomic>
@@ -36,6 +37,37 @@ void signal_handler(int sig) {
     g_running.store(false, std::memory_order_relaxed);
 }
 
+/// Create a fallback event from a hinted connector message
+Event make_hinted_event(const RawMessage& msg, SourceType source_type) {
+    Event e;
+    e.event_id    = generate_uuid();
+    e.timestamp   = now_ms();
+    e.received_at = e.timestamp;
+    e.source_type = source_type;
+    e.source_host = msg.source_addr;
+    e.raw         = msg.as_string();
+    e.category    = Category::Network;
+    e.severity    = Severity::Info;
+    e.action      = "api_event";
+
+    try {
+        auto j = nlohmann::json::parse(e.raw);
+        if (j.is_object()) {
+            if (j.contains("name"))
+                e.resource = j["name"].get<std::string>();
+            else if (j.contains("_id"))
+                e.resource = j["_id"].get<std::string>();
+            if (j.contains("ip") || j.contains("ipAddress"))
+                e.src_ip = j.value("ip", j.value("ipAddress", ""));
+            if (j.contains("mac"))
+                e.resource = j.value("hostname", j.value("name", j["mac"].get<std::string>()));
+            e.metadata = j;
+        }
+    } catch (...) {}
+
+    return e;
+}
+
 /// Parser worker thread: drains ring buffer, parses, stores, evaluates rules
 void parser_worker(RingBuffer<>& buffer, PostgresStorageEngine& storage,
                    RuleEngine& rule_engine,
@@ -44,10 +76,14 @@ void parser_worker(RingBuffer<>& buffer, PostgresStorageEngine& storage,
     while (g_running.load(std::memory_order_relaxed)) {
         auto msg = buffer.try_pop();
         if (!msg) {
-            // No data — brief sleep to avoid busy-spinning
             std::this_thread::sleep_for(std::chrono::microseconds(100));
             continue;
         }
+
+        // Check if this message has a source hint from a connector
+        std::string hint(msg->source_hint);
+        SourceType hinted_type = source_type_from_string(hint);
+        bool has_hint = (hinted_type != SourceType::Unknown);
 
         // Try each parser until one succeeds
         bool parsed = false;
@@ -63,16 +99,24 @@ void parser_worker(RingBuffer<>& buffer, PostgresStorageEngine& storage,
         }
 
         if (!parsed) {
-            // Fallback: store as raw unknown event
-            Event e;
-            e.event_id    = generate_uuid();
-            e.timestamp   = now_ms();
-            e.received_at = e.timestamp;
-            e.source_type = SourceType::Unknown;
-            e.source_host = msg->source_addr;
-            e.raw         = msg->as_string();
-            e.category    = Category::Unknown;
+            // No parser claimed it — use the source hint if available
+            Event e = has_hint
+                ? make_hinted_event(*msg, hinted_type)
+                : [&]() {
+                    Event ev;
+                    ev.event_id    = generate_uuid();
+                    ev.timestamp   = now_ms();
+                    ev.received_at = ev.timestamp;
+                    ev.source_type = SourceType::Unknown;
+                    ev.source_host = msg->source_addr;
+                    ev.raw         = msg->as_string();
+                    ev.category    = Category::Unknown;
+                    return ev;
+                }();
+
             storage.insert(e);
+            rule_engine.evaluate(e);
+            parsed_count.fetch_add(1, std::memory_order_relaxed);
         }
     }
 }

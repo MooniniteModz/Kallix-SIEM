@@ -186,6 +186,44 @@ bool PostgresStorageEngine::init() {
     LOG_INFO("PostgreSQL schema initialized. Batch size: {}, Flush interval: {}ms",
              config_.batch_size, config_.flush_interval_ms);
 
+    // ── Data migration: reclassify misclassified events ──
+    // Events from connectors may have been stored as "syslog" before the parser
+    // hint system was fully working. Reclassify based on metadata/raw content.
+    const char* reclassify_sql = R"(
+        UPDATE events SET source_type = 'unifi', category = 'network'
+        WHERE source_type = 'syslog'
+        AND (
+            metadata ? 'hardwareId' OR
+            metadata ? 'firmwareVersion' OR
+            metadata ? 'hardware_id' OR
+            metadata ? 'device_type' OR
+            (metadata ? 'mac' AND (metadata ? 'oui' OR metadata ? 'network_id' OR metadata ? 'usergroup_id')) OR
+            (metadata ? 'site_id' AND (metadata ? 'purpose' OR metadata ? 'networkgroup' OR metadata ? 'dhcpd_enabled')) OR
+            metadata ? 'siteId' OR
+            raw LIKE '%"hardwareId"%' OR
+            raw LIKE '%"firmwareVersion"%' OR
+            raw LIKE '%"oui"%' OR
+            raw LIKE '%"siteId"%' OR
+            raw LIKE '%"site_id"%' OR
+            raw LIKE '%"override_inform_host"%' OR
+            raw LIKE '%"networkgroup"%' OR
+            raw LIKE '%"release_channel"%' OR
+            raw LIKE '%"usergroup_id"%' OR
+            raw LIKE '%"network_id"%' OR
+            raw LIKE '%"ipAddress"%' OR
+            (raw LIKE '%"mac"%' AND raw LIKE '%"hostname"%') OR
+            source_host ILIKE '%unifi%'
+        );
+    )";
+    PGresult* mig_result = PQexec(conn_, reclassify_sql);
+    if (PQresultStatus(mig_result) == PGRES_COMMAND_OK) {
+        int rows = std::atoi(PQcmdTuples(mig_result));
+        if (rows > 0) {
+            LOG_INFO("Reclassified {} events from 'syslog' to 'unifi'", rows);
+        }
+    }
+    PQclear(mig_result);
+
     return true;
 }
 

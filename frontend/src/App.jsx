@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   LayoutDashboard, List, Bell, Settings as SettingsIcon,
   Database, BookOpen, LogOut, FileText, User
@@ -41,11 +41,36 @@ function App() {
     return () => clearInterval(id);
   }, [user]);
 
+  // ── Idle auto-logout (30 min) ──
+  const IDLE_TIMEOUT = 30 * 60 * 1000;
+  const idleTimer = useRef(null);
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(() => {
+      // Don't logout if globe is in fullscreen
+      if (document.querySelector('.globe-fullscreen')) return resetIdleTimer();
+      handleLogout();
+    }, IDLE_TIMEOUT);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(e => window.addEventListener(e, resetIdleTimer, { passive: true }));
+    resetIdleTimer();
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetIdleTimer));
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
+  }, [user, resetIdleTimer]);
+
   function handleLogin(data) {
     setUser({ username: data.username, role: data.role });
   }
 
   function handleLogout() {
+    if (idleTimer.current) clearTimeout(idleTimer.current);
     api.logout().catch(() => {});
     localStorage.removeItem('outpost_token');
     setUser(null);

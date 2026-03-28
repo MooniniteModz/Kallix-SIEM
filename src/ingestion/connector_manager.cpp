@@ -1,5 +1,6 @@
 #include "ingestion/connector_manager.h"
 
+#include <algorithm>
 #include <sstream>
 #include <iomanip>
 
@@ -296,13 +297,47 @@ void ApiPollerInstance::stop() {
     if (thread_.joinable()) thread_.join();
 }
 
+/// Try to detect source type from a string (connector name or URL)
+static std::string detect_source_hint(const std::string& text) {
+    std::string lower;
+    lower.resize(text.size());
+    std::transform(text.begin(), text.end(), lower.begin(),
+                   [](char c) { return std::tolower(c); });
+
+    if (lower.find("unifi") != std::string::npos || lower.find("ubiquiti") != std::string::npos ||
+        lower.find("/proxy/network/") != std::string::npos)
+        return "unifi";
+    if (lower.find("azure") != std::string::npos)    return "azure";
+    if (lower.find("m365") != std::string::npos || lower.find("microsoft 365") != std::string::npos ||
+        lower.find("office") != std::string::npos)
+        return "m365";
+    if (lower.find("fortigate") != std::string::npos || lower.find("fortinet") != std::string::npos)
+        return "fortigate";
+    if (lower.find("windows") != std::string::npos)  return "windows";
+    if (lower.find("sentinel") != std::string::npos)  return "sentinelone";
+    if (lower.find("crowdstrike") != std::string::npos || lower.find("falcon") != std::string::npos)
+        return "crowdstrike";
+    return "";
+}
+
 void ApiPollerInstance::poll_loop() {
     std::string url = settings_.value("url", "");
     std::string auth_type = settings_.value("auth_type", "none");
     int poll_interval = settings_.value("poll_interval_sec", 60);
     if (poll_interval < 5) poll_interval = 5;
 
-    std::string source_label = settings_.value("source_label", "rest_api");
+    std::string source_label = settings_.value("source_label", "");
+    // Auto-detect from connector name or URL if not explicitly set
+    if (source_label.empty()) {
+        std::string connector_name = settings_.value("_connector_name", "");
+        source_label = detect_source_hint(connector_name);
+    }
+    if (source_label.empty()) {
+        source_label = detect_source_hint(url);
+    }
+    if (source_label.empty()) source_label = "rest_api";
+
+    LOG_INFO("ConnectorManager [{}]: source_label resolved to '{}'", connector_id_, source_label);
 
     LOG_INFO("ConnectorManager: starting poller for connector {} (url={}, interval={}s)",
              connector_id_, url, poll_interval);
@@ -347,7 +382,8 @@ void ApiPollerInstance::poll_loop() {
                 std::string json_str = evt.dump();
                 if (json_str.size() < RawMessage::MAX_SIZE) {
                     RawMessage msg;
-                    msg.set(json_str.c_str(), json_str.size(), 443, source_label.c_str());
+                    msg.set(json_str.c_str(), json_str.size(), 443, source_label.c_str(),
+                            source_label.c_str());
                     if (!buffer_.try_push(msg)) {
                         buffer_.record_drop();
                     }
@@ -427,6 +463,8 @@ void ConnectorManager::sync() {
             try {
                 auto settings = nlohmann::json::parse(c.settings_json);
                 if (!settings.value("url", "").empty()) {
+                    // Inject connector name so poll_loop can derive source hint
+                    settings["_connector_name"] = c.name;
                     should_run[c.id] = settings;
                 }
             } catch (...) {}

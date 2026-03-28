@@ -21,8 +21,10 @@ struct RawMessage {
     uint16_t length = 0;
     uint16_t source_port = 0;   // which listener port received this
     char     source_addr[46];   // sender IP (INET6_ADDRSTRLEN)
+    char     source_hint[24];   // source type hint from connector (e.g. "unifi", "azure")
 
-    void set(const char* buf, size_t len, uint16_t port, const char* addr) {
+    void set(const char* buf, size_t len, uint16_t port, const char* addr,
+             const char* hint = nullptr) {
         length = static_cast<uint16_t>(len < MAX_SIZE ? len : MAX_SIZE - 1);
         std::memcpy(data, buf, length);
         data[length] = '\0';
@@ -32,6 +34,12 @@ struct RawMessage {
             source_addr[sizeof(source_addr) - 1] = '\0';
         } else {
             source_addr[0] = '\0';
+        }
+        if (hint) {
+            std::strncpy(source_hint, hint, sizeof(source_hint) - 1);
+            source_hint[sizeof(source_hint) - 1] = '\0';
+        } else {
+            source_hint[0] = '\0';
         }
     }
 

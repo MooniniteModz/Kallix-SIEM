@@ -26,12 +26,11 @@ export default function Login({ onLogin }) {
   return (
     <div className="login-container">
       <form className="login-card" onSubmit={handleSubmit}>
-        <div className="login-logo">
-          <div className="logo-icon"><FirewatchLogo size={24} /></div>
-          <div>
-            <h1>Firewatch</h1>
-            <span>SIEM Platform</span>
+        <div className="login-brand">
+          <div className="login-brand-icon">
+            <FirewatchLogo size={44} />
           </div>
+          <h1 className="login-brand-name">Firewatch</h1>
         </div>
 
         {error && <div className="login-error">{error}</div>}

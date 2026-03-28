@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common/event.h"
-#include <libpq-fe.h>  // Postgre C library
+#include <libpq-fe.h>
 #include <map>
 #include <memory>
 #include <mutex>
