@@ -4,12 +4,7 @@
 #include "ingestion/syslog_listener.h"
 #include "ingestion/http_poller.h"
 #include "ingestion/connector_manager.h"
-#include "parser/fortigate_parser.h"
-#include "parser/windows_parser.h"
-#include "parser/m365_parser.h"
-#include "parser/azure_parser.h"
-#include "parser/unifi_parser.h"
-#include "parser/syslog_parser.h"
+#include "parser/parser_registry.h"
 #include "rules/rule_engine.h"
 #include "storage/postgres_storage_engine.h"
 #include "api/server.h"
@@ -191,14 +186,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Parsers (order matters — more specific parsers first)
-    std::vector<std::unique_ptr<Parser>> parsers;
-    parsers.push_back(std::make_unique<FortiGateParser>());
-    parsers.push_back(std::make_unique<WindowsParser>());
-    parsers.push_back(std::make_unique<M365Parser>());
-    parsers.push_back(std::make_unique<AzureParser>());
-    parsers.push_back(std::make_unique<UniFiParser>());
-    parsers.push_back(std::make_unique<SyslogParser>());  // catch-all last
+    // Parser registry (order matters — specific parsers first, catch-all last)
+    ParserRegistry parser_registry;
+    parser_registry.register_defaults();
+    auto& parsers = parser_registry.parsers();
 
     // Syslog listener
     SyslogConfig syslog_config;

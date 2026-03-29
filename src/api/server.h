@@ -33,6 +33,16 @@ public:
 
 private:
     void setup_routes();
+    void register_auth_routes();
+    void register_user_routes();
+    void register_stats_routes();
+    void register_event_routes();
+    void register_alert_routes();
+    void register_rule_routes();
+    void register_report_routes();
+    void register_integration_routes();
+    void register_geo_routes();
+    void register_connector_routes();
 
     httplib::Server            server_;
     PostgresStorageEngine&     storage_;
