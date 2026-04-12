@@ -102,6 +102,9 @@ void ApiServer::setup_routes() {
         if (req.path == "/api/auth/login")           return httplib::Server::HandlerResponse::Unhandled;
         if (req.path == "/api/auth/forgot-password") return httplib::Server::HandlerResponse::Unhandled;
         if (req.path == "/api/auth/reset-password")  return httplib::Server::HandlerResponse::Unhandled;
+        // HEC uses its own token auth — exempt from session auth middleware
+        if (req.path.substr(0, 8) == "/api/hec")        return httplib::Server::HandlerResponse::Unhandled;
+        if (req.path.substr(0, 9) == "/services")       return httplib::Server::HandlerResponse::Unhandled;
         if (req.path.substr(0, 4) != "/api") return httplib::Server::HandlerResponse::Unhandled;
 
         auto token = get_bearer_token(req);
@@ -139,6 +142,7 @@ void ApiServer::setup_routes() {
     register_integration_routes();
     register_geo_routes();
     register_connector_routes();
+    register_hec_routes();
 }
 
 } // namespace outpost

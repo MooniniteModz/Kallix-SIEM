@@ -97,10 +97,18 @@ void ApiServer::register_integration_routes() {
             YAML::Node config = YAML::LoadFile(config_path_);
 
             auto update_integration = [&](const std::string& name, const nlohmann::json& j) {
-                config["integrations"][name]["enabled"]          = j.value("enabled", false);
-                config["integrations"][name]["tenant_id"]        = j.value("tenant_id", "");
-                config["integrations"][name]["client_id"]        = j.value("client_id", "");
-                config["integrations"][name]["client_secret"]    = j.value("client_secret", "");
+                config["integrations"][name]["enabled"]           = j.value("enabled", false);
+                config["integrations"][name]["tenant_id"]         = j.value("tenant_id", "");
+                config["integrations"][name]["client_id"]         = j.value("client_id", "");
+                // Only write the secret when a real value is provided.
+                // The GET endpoint masks the secret as "****" so that it is never
+                // exposed via the API. If "****" (or empty) is sent back on save,
+                // keep the existing YAML value intact — otherwise every Settings
+                // page save would silently corrupt the stored credential.
+                std::string new_secret = j.value("client_secret", "");
+                if (new_secret != "****" && !new_secret.empty()) {
+                    config["integrations"][name]["client_secret"] = new_secret;
+                }
                 config["integrations"][name]["poll_interval_sec"] = j.value("poll_interval_sec", 60);
                 if (j.contains("subscription_id"))
                     config["integrations"][name]["subscription_id"] = j.value("subscription_id", "");
@@ -118,13 +126,21 @@ void ApiServer::register_integration_routes() {
             fout << config;
             fout.close();
 
+            // Build the live poller config by reading secrets back from the YAML
+            // node (which update_integration just wrote), not from the request body.
+            // This ensures "****" placeholders in the request never reach the poller.
+            auto yaml_secret = [&](const std::string& name) -> std::string {
+                auto node = config["integrations"][name];
+                return (node && node["client_secret"]) ? node["client_secret"].as<std::string>() : "";
+            };
+
             HttpPollerConfig new_poller_config;
             if (body.contains("m365")) {
                 auto& m = body["m365"];
                 new_poller_config.m365_enabled = m.value("enabled", false);
                 new_poller_config.m365_oauth.tenant_id     = m.value("tenant_id", "");
                 new_poller_config.m365_oauth.client_id     = m.value("client_id", "");
-                new_poller_config.m365_oauth.client_secret = m.value("client_secret", "");
+                new_poller_config.m365_oauth.client_secret = yaml_secret("m365");
                 new_poller_config.m365_poll_interval_sec    = m.value("poll_interval_sec", 60);
             }
             if (body.contains("azure")) {
@@ -132,7 +148,7 @@ void ApiServer::register_integration_routes() {
                 new_poller_config.azure_enabled = a.value("enabled", false);
                 new_poller_config.azure_oauth.tenant_id     = a.value("tenant_id", "");
                 new_poller_config.azure_oauth.client_id     = a.value("client_id", "");
-                new_poller_config.azure_oauth.client_secret = a.value("client_secret", "");
+                new_poller_config.azure_oauth.client_secret = yaml_secret("azure");
                 new_poller_config.azure_subscription_id     = a.value("subscription_id", "");
                 new_poller_config.azure_poll_interval_sec    = a.value("poll_interval_sec", 60);
             }

@@ -275,6 +275,24 @@ int main(int argc, char* argv[]) {
     }
     if (const char* v = std::getenv("OUTPOST_CORS_ORIGIN")) api_config.cors_origin = v;
 
+    // HEC token: YAML > env var > auto-generated
+    auto hec_node = config["hec"];
+    if (hec_node && hec_node["token"]) {
+        api_config.hec_token = hec_node["token"].as<std::string>();
+    }
+    if (const char* v = std::getenv("OUTPOST_HEC_TOKEN")) api_config.hec_token = v;
+    if (api_config.hec_token.empty()) {
+        api_config.hec_token = generate_uuid();
+        LOG_WARN("╔══════════════════════════════════════════════════════════╗");
+        LOG_WARN("║  HEC token auto-generated (not set in outpost.yaml):     ║");
+        LOG_WARN("║  {}  ║", api_config.hec_token);
+        LOG_WARN("║  Add to config:  hec:                                    ║");
+        LOG_WARN("║                    token: {}  ║", api_config.hec_token);
+        LOG_WARN("╚══════════════════════════════════════════════════════════╝");
+    } else {
+        LOG_INFO("HEC endpoint enabled (token configured)");
+    }
+
     // SMTP config (for password reset emails)
     SmtpConfig smtp_config;
     auto smtp_node = config["smtp"];

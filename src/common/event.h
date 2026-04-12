@@ -14,6 +14,7 @@ enum class SourceType : uint8_t {
     Azure,
     UniFi,
     Syslog,
+    CEF,
     Unknown
 };
 
@@ -44,6 +45,10 @@ enum class Outcome : uint8_t {
     Success,
     Failure,
     Unknown
+};
+
+enum class Location : uint8_t {
+      
 };
 
 /// ────────────────────────────────────────────────────────────────

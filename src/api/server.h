@@ -18,6 +18,7 @@ struct ApiConfig {
     std::string bind_address  = "0.0.0.0";
     uint16_t    port          = 8080;
     std::string cors_origin   = "*";
+    std::string hec_token;    // HEC auth token; if empty, endpoint warns but accepts all
 };
 
 class ApiServer {
@@ -53,6 +54,7 @@ private:
     void register_integration_routes();
     void register_geo_routes();
     void register_connector_routes();
+    void register_hec_routes();
 
     httplib::Server            server_;
     PostgresStorageEngine&     storage_;

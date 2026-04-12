@@ -74,6 +74,7 @@ add_library(outpost_lib STATIC
     src/parser/m365_parser.cpp
     src/parser/azure_parser.cpp
     src/parser/unifi_parser.cpp
+    src/parser/cef_parser.cpp
     src/parser/parser_registry.cpp
     src/storage/postgres_storage_engine.cpp
     src/storage/postgres_alerts.cpp
@@ -91,6 +92,7 @@ add_library(outpost_lib STATIC
     src/api/routes_events.cpp
     src/api/routes_rules.cpp
     src/api/routes_connectors.cpp
+    src/api/routes_hec.cpp
     src/auth/auth.cpp
     src/auth/smtp.cpp
     src/storage/postgres_reset.cpp

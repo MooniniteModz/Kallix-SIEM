@@ -15,6 +15,10 @@ postgres:
 api:
   bind_address: 0.0.0.0
   port: 8080
+hec:
+  # HTTP Event Collector token — tools send "Authorization: Splunk <token>"
+  # Leave empty to auto-generate a token at startup (it will be logged).
+  token: YOUR_HEC_TOKEN
 integrations:
   m365:
     enabled: false

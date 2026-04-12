@@ -10,6 +10,7 @@ std::string to_string(SourceType t) {
         case SourceType::Azure:     return "azure";
         case SourceType::UniFi:     return "unifi";
         case SourceType::Syslog:    return "syslog";
+        case SourceType::CEF:       return "cef";
         default:                    return "unknown";
     }
 }
@@ -54,6 +55,7 @@ SourceType source_type_from_string(const std::string& s) {
     if (s == "azure")     return SourceType::Azure;
     if (s == "unifi")     return SourceType::UniFi;
     if (s == "syslog")    return SourceType::Syslog;
+    if (s == "cef")       return SourceType::CEF;
     return SourceType::Unknown;
 }
 

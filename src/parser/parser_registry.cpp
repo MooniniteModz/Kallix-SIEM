@@ -4,6 +4,7 @@
 #include "parser/m365_parser.h"
 #include "parser/azure_parser.h"
 #include "parser/unifi_parser.h"
+#include "parser/cef_parser.h"
 #include "parser/syslog_parser.h"
 #include "common/logger.h"
 
@@ -20,7 +21,8 @@ void ParserRegistry::register_defaults() {
     //   3. M365:      JSON with "Workload" field, only matches M365 API data
     //   4. Azure:     JSON with "operationName" field, only matches Azure data
     //   5. UniFi:     JSON with UniFi-specific fields (mac, site_id, etc.)
-    //   6. Syslog:    RFC 3164/5424 catch-all — must be LAST
+    //   6. CEF:       Common Event Format — "CEF:" marker anywhere in message
+    //   7. Syslog:    RFC 3164/5424 catch-all — must be LAST
     //
     // Each parser quickly rejects messages it can't handle (returns nullopt),
     // so the overhead of trying all parsers is minimal.
@@ -30,6 +32,7 @@ void ParserRegistry::register_defaults() {
     register_parser("m365",      [] { return std::make_unique<M365Parser>(); });
     register_parser("azure",     [] { return std::make_unique<AzureParser>(); });
     register_parser("unifi",     [] { return std::make_unique<UniFiParser>(); });
+    register_parser("cef",       [] { return std::make_unique<CefParser>(); });
     register_parser("syslog",    [] { return std::make_unique<SyslogParser>(); });
 
     LOG_INFO("Parser registry: {} parsers registered", parsers_.size());

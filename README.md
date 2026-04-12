@@ -78,9 +78,12 @@ Outpost ingests logs from syslog, cloud APIs (M365, Azure Monitor, Microsoft Gra
 # Create the database
 sudo -u postgres createdb outpost
 
+# Set up config (copy example and fill in your credentials)
+cp config/outpost.yaml.example config/outpost.yaml
+
 # Build the backend
 mkdir -p build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 cd ..
 
