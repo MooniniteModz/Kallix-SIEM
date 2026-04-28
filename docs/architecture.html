@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kallix SIEM — Architecture</title>
+<style>
+  :root {
+    --bg:         #06090f;
+    --surface:    #0c1120;
+    --surface2:   #101828;
+    --border:     #1a2640;
+    --border2:    #243045;
+    --text:       #e2e8f0;
+    --muted:      #4a5d78;
+    --muted2:     #64748b;
+    --blue:       #3b82f6;
+    --purple:     #8b5cf6;
+    --cyan:       #06b6d4;
+    --amber:      #f59e0b;
+    --green:      #10b981;
+    --red:        #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 48px 40px;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 15% 0%,   rgba(59,130,246,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 85% 100%,  rgba(139,92,246,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 50% 50%,   rgba(16,185,129,0.03) 0%, transparent 60%);
+  }
+
+  .page { max-width: 1540px; margin: 0 auto; }
+
+  /* ─── Header ─────────────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 52px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .brand-shield {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 28px rgba(59,130,246,0.3);
+    font-size: 24px;
+  }
+
+  .brand-name {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .brand-sub {
+    font-size: 11px;
+    color: var(--muted2);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .header-meta {
+    text-align: right;
+    font-size: 12px;
+    color: var(--muted2);
+    line-height: 1.8;
+  }
+
+  .header-meta strong { color: var(--blue); }
+
+  /* ─── Section labels ──────────────────────────────────────────────── */
+  .section { margin-bottom: 20px; }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .section-label .pill {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--muted2);
+    white-space: nowrap;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--border2), transparent);
+  }
+
+  /* ─── Flow row ────────────────────────────────────────────────────── */
+  .flow-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  /* ─── Arrow ───────────────────────────────────────────────────────── */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    flex-shrink: 0;
+    gap: 4px;
+  }
+
+  .arrow-line {
+    width: 32px;
+    height: 2px;
+    background: linear-gradient(to right, var(--border2), var(--muted));
+    position: relative;
+  }
+
+  .arrow-line::after {
+    content: '';
+    position: absolute;
+    right: -1px; top: -4px;
+    border: 5px solid transparent;
+    border-left: 8px solid var(--muted);
+  }
+
+  .arrow-bidir {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .arrow-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .arrow-r { color: var(--muted); font-size: 18px; line-height: 1; }
+  .arrow-l { color: var(--muted); font-size: 18px; line-height: 1; transform: scaleX(-1); display: inline-block; }
+
+  /* ─── Cards ───────────────────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 20px;
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .card--purple::before { background: linear-gradient(to right, #7c3aed, #4f46e5); }
+  .card--blue::before   { background: linear-gradient(to right, #2563eb, #0284c7); }
+  .card--cyan::before   { background: linear-gradient(to right, #0891b2, #0e7490); }
+  .card--amber::before  { background: linear-gradient(to right, #d97706, #b45309); }
+  .card--green::before  { background: linear-gradient(to right, #059669, #047857); }
+
+  .card-glow {
+    position: absolute;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    top: -40px; right: -40px;
+    opacity: 0.04;
+    pointer-events: none;
+  }
+
+  .card--purple .card-glow { background: #8b5cf6; }
+  .card--blue   .card-glow { background: #3b82f6; }
+  .card--cyan   .card-glow { background: #06b6d4; }
+  .card--amber  .card-glow { background: #f59e0b; }
+  .card--green  .card-glow { background: #10b981; }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .card-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+
+  .card--purple .card-icon { background: rgba(139,92,246,0.12); }
+  .card--blue   .card-icon { background: rgba(59,130,246,0.12); }
+  .card--cyan   .card-icon { background: rgba(6,182,212,0.12); }
+  .card--amber  .card-icon { background: rgba(245,158,11,0.12); }
+  .card--green  .card-icon { background: rgba(16,185,129,0.12); }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .card--purple .card-title { color: #a78bfa; }
+  .card--blue   .card-title { color: #60a5fa; }
+  .card--cyan   .card-title { color: #22d3ee; }
+  .card--amber  .card-title { color: #fbbf24; }
+  .card--green  .card-title { color: #34d399; }
+
+  /* items */
+  .items { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+
+  .items li {
+    font-size: 12px;
+    color: #7a90ab;
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    line-height: 1.5;
+  }
+
+  .items li .dot {
+    flex-shrink: 0;
+    margin-top: 5px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+  }
+
+  .card--purple .dot { background: #8b5cf6; }
+  .card--blue   .dot { background: #3b82f6; }
+  .card--cyan   .dot { background: #06b6d4; }
+  .card--amber  .dot { background: #f59e0b; }
+  .card--green  .dot { background: #10b981; }
+
+  .group-label {
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    color: var(--muted) !important;
+    margin-top: 10px !important;
+    margin-bottom: 1px !important;
+  }
+
+  .group-label .dot { display: none !important; }
+
+  /* ─── Sub-grid inside API card ────────────────────────────────────── */
+  .api-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+  }
+
+  .api-col-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #4a8cc8;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  /* ─── Bridge connector ────────────────────────────────────────────── */
+  .bridge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 0;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .bridge-line {
+    flex: 1;
+    max-width: 200px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border2), transparent);
+  }
+
+  .bridge-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted2);
+    white-space: nowrap;
+  }
+
+  /* ─── Thread badge ────────────────────────────────────────────────── */
+  .thread-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-size: 9px;
+    color: #60a5fa;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  /* ─── Tech stack ──────────────────────────────────────────────────── */
+  .footer {
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .footer-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 4px;
+    white-space: nowrap;
+  }
+
+  .badge {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 4px 11px;
+    font-size: 11px;
+    color: var(--muted2);
+    font-family: 'SFMono-Regular', 'Consolas', monospace;
+    white-space: nowrap;
+  }
+
+  /* ─── Hover glow effect ───────────────────────────────────────────── */
+  .card {
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+
+  .card:hover {
+    box-shadow: 0 0 0 1px var(--border2), 0 8px 40px rgba(0,0,0,0.4);
+  }
+
+  .card--purple:hover { border-color: rgba(139,92,246,0.4); }
+  .card--blue:hover   { border-color: rgba(59,130,246,0.4); }
+  .card--cyan:hover   { border-color: rgba(6,182,212,0.4); }
+  .card--amber:hover  { border-color: rgba(245,158,11,0.4); }
+  .card--green:hover  { border-color: rgba(16,185,129,0.4); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══ HEADER ══════════════════════════════════════════════════════════ -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-shield">⚡</div>
+      <div>
+        <div class="brand-name">Kallix SIEM</div>
+        <div class="brand-sub">Architecture &amp; Data Flow</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div>C++20 Backend &nbsp;·&nbsp; React / Vite Frontend &nbsp;·&nbsp; PostgreSQL Storage</div>
+      <div style="margin-top: 4px;"><strong>Multi-source log ingestion</strong> &nbsp;→&nbsp; <strong>Parse</strong> &nbsp;→&nbsp; <strong>Correlate</strong> &nbsp;→&nbsp; <strong>Alert</strong></div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 1 — INGESTION PIPELINE ═══════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">
+      <span class="pill">01 — WRITE PATH</span>
+      Event Ingestion Pipeline
+    </div>
+
+    <div class="flow-row">
+
+      <!-- DATA SOURCES -->
+      <div class="card card--purple">
+        <div class="card-glow"></div>
+        <div class="card-head">
+          <div class="card-icon">📡</div>
+          <div class="card-title">Data Sources</div>
+        </div>
+        <ul class="items">
+          <li><span class="dot"></span><span class="group-label">Syslog Listener</span></li>
+          <li><span class="dot"></span>UDP + TCP (multi-port)</li>
+          <li><span class="dot"></span>FortiGate · pfSense</li>
+          <li><span class="dot"></span>Linux · UniFi · Cisco</li>
+          <li><span class="dot"></span><span class="group-label">HTTP Poller</span></li>
+          <li><span class="dot"></span>M365 Management API</li>
+          <li><span class="dot"></span>Azure Monitor API</li>
+          <li><span class="dot"></span>OAuth2 client creds</li>
+          <li><span class="dot"></span>Two dedicated threads</li>
+          <li><span class="dot"></span><span class="group-label">HEC Endpoint</span></li>
+          <li><span class="dot"></span>POST /services/collector</li>
+          <li><span class="dot"></span>Splunk-compatible</li>
+          <li><span class="dot"></span>Batch + single event</li>
+          <li><span class="dot"></span><span class="group-label">REST Connectors</span></li>
+          <li><span class="dot"></span>Generic API pollers</li>
+          <li><span class="dot"></span>Per-connector thread</li>
+          <li><span class="dot"></span>SSRF-protected</li>
+        </ul>
+      </div>
+
+      <!-- Arrow -->
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">push</div>
+      </div>
+
+      <!-- RING BUFFER -->
+      <div class="card card--blue">
+        <div class="card-glow"></div>
+        <div class="card-head">
+          <div class="card-icon">🔄</div>
+          <div class="card-title">Ring Buffer</div>
+        </div>
+        <div class="thread-badge">⚡ Lock-free MPMC</div>
+        <ul class="items">
+          <li><span class="dot"></span>65,536 slots</li>
+          <li><span class="dot"></span>8 KB per slot (max)</li>
+          <li><span class="dot"></span>Power-of-2 masking</li>
+          <li><span class="dot"></span>CAS slot claim</li>
+          <li><span class="dot"></span>Sequence numbers</li>
+          <li><span class="dot"></span><span class="group-label">Backpressure</span></li>
+          <li><span class="dot"></span>try_push() → false if full</li>
+          <li><span class="dot"></span>Drop counter metric</li>
+          <li><span class="dot"></span><span class="group-label">RawMessage struct</span></li>
+          <li><span class="dot"></span>data[8192]</li>
+          <li><span class="dot"></span>source_addr[46]</li>
+          <li><span class="dot"></span>source_hint[24]</li>
+          <li><span class="dot"></span>source_port</li>
+        </ul>
+      </div>
+
+      <!-- Arrow -->
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">consume</div>
+      </div>
+
+      <!-- PARSER PIPELINE -->
+      <div class="card card--cyan">
+        <div class="card-glow"></div>
+        <div class="card-head">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">Parser Pipeline</div>
+        </div>
+        <div class="thread-badge">⚡ Worker thread(s)</div>
+        <ul class="items">
+          <li><span class="dot"></span><span class="group-label">ParserRegistry (ordered)</span></li>
+          <li><span class="dot"></span>CEF (ArcSight format)</li>
+          <li><span class="dot"></span>Azure Monitor</li>
+          <li><span class="dot"></span>M365 Audit</li>
+          <li><span class="dot"></span>FortiGate</li>
+          <li><span class="dot"></span>Windows Event Log</li>
+          <li><span class="dot"></span>UniFi Network</li>
+          <li><span class="dot"></span>Syslog (catch-all)</li>
+          <li><span class="dot"></span><span class="group-label">Source hint routing</span></li>
+          <li><span class="dot"></span>source_hint → parser</li>
+          <li><span class="dot"></span>First-match wins</li>
+          <li><span class="dot"></span><span class="group-label">Output: Event { }</span></li>
+          <li><span class="dot"></span>UUID event_id</li>
+          <li><span class="dot"></span>src_ip · dst_ip · user</li>
+          <li><span class="dot"></span>category · severity</li>
+          <li><span class="dot"></span>action · outcome</li>
+        </ul>
+      </div>
+
+      <!-- Arrow -->
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">evaluate</div>
+      </div>
+
+      <!-- RULE ENGINE -->
+      <div class="card card--amber">
+        <div class="card-glow"></div>
+        <div class="card-head">
+          <div class="card-icon">🛡️</div>
+          <div class="card-title">Rule Engine</div>
+        </div>
+        <div class="thread-badge">⚡ Same worker thread</div>
+        <ul class="items">
+          <li><span class="dot"></span><span class="group-label">Rule Types</span></li>
+          <li><span class="dot"></span>Threshold (sliding window)</li>
+          <li><span class="dot"></span>Sequence (ordered steps)</li>
+          <li><span class="dot"></span>ValueList (blocklist)</li>
+          <li><span class="dot"></span>Anomaly detection</li>
+          <li><span class="dot"></span><span class="group-label">Detection Logic</span></li>
+          <li><span class="dot"></span>Per group-key state</li>
+          <li><span class="dot"></span>5-min alert cooldown</li>
+          <li><span class="dot"></span>Dedup by rule+group</li>
+          <li><span class="dot"></span>Alert callbacks</li>
+          <li><span class="dot"></span><span class="group-label">Rule Sources</span></li>
+          <li><span class="dot"></span>YAML rules directory</li>
+          <li><span class="dot"></span>Custom rules (DB)</li>
+          <li><span class="dot"></span>Hot reload (SIGHUP)</li>
+        </ul>
+      </div>
+
+      <!-- Arrow -->
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">write</div>
+      </div>
+
+      <!-- POSTGRESQL -->
+      <div class="card card--green">
+        <div class="card-glow"></div>
+        <div class="card-head">
+          <div class="card-icon">🐘</div>
+          <div class="card-title">PostgreSQL</div>
+        </div>
+        <ul class="items">
+          <li><span class="dot"></span><span class="group-label">Event Store</span></li>
+          <li><span class="dot"></span>events (daily partitioned)</li>
+          <li><span class="dot"></span>alerts</li>
+          <li><span class="dot"></span><span class="group-label">Auth &amp; Identity</span></li>
+          <li><span class="dot"></span>users</li>
+          <li><span class="dot"></span>sessions</li>
+          <li><span class="dot"></span>password_reset_tokens</li>
+          <li><span class="dot"></span><span class="group-label">Configuration</span></li>
+          <li><span class="dot"></span>connectors</li>
+          <li><span class="dot"></span>custom_rules</li>
+          <li><span class="dot"></span><span class="group-label">Enrichment</span></li>
+          <li><span class="dot"></span>geo_cache</li>
+          <li><span class="dot"></span><span class="group-label">Safety</span></li>
+          <li><span class="dot"></span>PQexecParams (parameterized)</li>
+          <li><span class="dot"></span>mutex-protected libpq</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ BRIDGE ═══════════════════════════════════════════════════════ -->
+  <div class="bridge">
+    <div class="bridge-line"></div>
+    <div class="bridge-badge">same PostgreSQL instance — pipeline writes, API reads</div>
+    <div class="bridge-line"></div>
+  </div>
+
+  <!-- ══ SECTION 2 — API PLANE ═════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">
+      <span class="pill">02 — READ / MANAGEMENT PATH</span>
+      API &amp; Management Plane
+    </div>
+
+    <div class="flow-row">
+
+      <!-- FRONTEND -->
+      <div class="card card--purple" style="flex: 0 0 210px; max-width: 210px;">
+        <div class="card-glow"></div>
+        <div class="card-head">
+          <div class="card-icon">🖥️</div>
+          <div class="card-title">Frontend</div>
+        </div>
+        <ul class="items">
+          <li><span class="dot"></span><span class="group-label">Stack</span></li>
+          <li><span class="dot"></span>React 18</li>
+          <li><span class="dot"></span>Vite</li>
+          <li><span class="dot"></span><span class="group-label">Pages</span></li>
+          <li><span class="dot"></span>Dashboard</li>
+          <li><span class="dot"></span>Events &amp; Search</li>
+          <li><span class="dot"></span>Alerts</li>
+          <li><span class="dot"></span>Rule Editor</li>
+          <li><span class="dot"></span>Connectors</li>
+          <li><span class="dot"></span>User Management</li>
+          <li><span class="dot"></span>Settings</li>
+          <li><span class="dot"></span><span class="group-label">Auth</span></li>
+          <li><span class="dot"></span>HttpOnly cookie</li>
+          <li><span class="dot"></span>Bearer token</li>
+        </ul>
+      </div>
+
+      <!-- Bidir arrow -->
+      <div class="arrow" style="gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 0;">
+          <span style="font-size:11px; color:var(--muted);">◀</span>
+          <div style="width:28px; height:1px; background: var(--border2);"></div>
+        </div>
+        <div class="arrow-label">REST / JSON</div>
+        <div style="display: flex; align-items: center; gap: 0;">
+          <div style="width:28px; height:1px; background: var(--border2);"></div>
+          <span style="font-size:11px; color:var(--muted);">▶</span>
+        </div>
+      </div>
+
+      <!-- API SERVER -->
+      <div class="card card--blue" style="flex: 3;">
+        <div class="card-glow"></div>
+        <div class="card-head">
+          <div class="card-icon">🌐</div>
+          <div class="card-title">API Server &nbsp;—&nbsp; cpp-httplib</div>
+        </div>
+
+        <div class="api-grid">
+
+          <div>
+            <div class="api-col-title">Middleware</div>
+            <ul class="items">
+              <li><span class="dot"></span>X-Content-Type-Options</li>
+              <li><span class="dot"></span>X-Frame-Options: DENY</li>
+              <li><span class="dot"></span>X-XSS-Protection</li>
+              <li><span class="dot"></span>CSP: frame-ancestors none</li>
+              <li><span class="dot"></span>Referrer-Policy</li>
+              <li><span class="dot"></span>Permissions-Policy</li>
+              <li><span class="dot"></span>CORS origin validation</li>
+              <li><span class="dot"></span>Session auth gate</li>
+              <li><span class="dot"></span>OPTIONS preflight</li>
+              <li><span class="dot"></span>8 MB body limit</li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="api-col-title">Routes</div>
+            <ul class="items">
+              <li><span class="dot"></span>POST /api/auth/login</li>
+              <li><span class="dot"></span>POST /api/auth/logout</li>
+              <li><span class="dot"></span>POST /api/auth/forgot-password</li>
+              <li><span class="dot"></span>POST /api/auth/reset-password</li>
+              <li><span class="dot"></span>GET  /api/auth/me</li>
+              <li><span class="dot"></span>GET  /api/events</li>
+              <li><span class="dot"></span>GET  /api/alerts</li>
+              <li><span class="dot"></span>GET  /api/stats/*</li>
+              <li><span class="dot"></span>CRUD /api/users (admin)</li>
+              <li><span class="dot"></span>CRUD /api/rules (admin)</li>
+              <li><span class="dot"></span>CRUD /api/connectors (admin)</li>
+              <li><span class="dot"></span>POST /api/hec/v1</li>
+              <li><span class="dot"></span>POST /services/collector</li>
+              <li><span class="dot"></span>GET  /api/geo/*</li>
+              <li><span class="dot"></span>GET  /api/reports/*</li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="api-col-title">Security Layer</div>
+            <ul class="items">
+              <li><span class="dot"></span>PBKDF2-HMAC-SHA256</li>
+              <li><span class="dot"></span>100,000 iterations</li>
+              <li><span class="dot"></span>32-byte random salt</li>
+              <li><span class="dot"></span>IP + username rate limit</li>
+              <li><span class="dot"></span>Lockout (5 tries / 15 min)</li>
+              <li><span class="dot"></span>Map eviction on expiry</li>
+              <li><span class="dot"></span>SSRF blocklist (RFC1918)</li>
+              <li><span class="dot"></span>Reset token hashed (SHA-256)</li>
+              <li><span class="dot"></span>Credential length guard</li>
+              <li><span class="dot"></span>Role-based access control</li>
+              <li><span class="dot"></span>HttpOnly; SameSite=Strict</li>
+              <li><span class="dot"></span>Secure flag (HTTPS)</li>
+              <li><span class="dot"></span>Parameterized SQL (all)</li>
+              <li><span class="dot"></span>SMTP TLS enforced</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bidir arrow -->
+      <div class="arrow" style="gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 0;">
+          <span style="font-size:11px; color:var(--muted);">◀</span>
+          <div style="width:28px; height:1px; background: var(--border2);"></div>
+        </div>
+        <div class="arrow-label">libpq</div>
+        <div style="display: flex; align-items: center; gap: 0;">
+          <div style="width:28px; height:1px; background: var(--border2);"></div>
+          <span style="font-size:11px; color:var(--muted);">▶</span>
+        </div>
+      </div>
+
+      <!-- POSTGRESQL (shared) -->
+      <div class="card card--green" style="flex: 0 0 210px; max-width: 210px;">
+        <div class="card-glow"></div>
+        <div class="card-head">
+          <div class="card-icon">🐘</div>
+          <div class="card-title">PostgreSQL</div>
+        </div>
+        <ul class="items">
+          <li><span class="dot"></span><span style="color:#34d399; font-size:11px;">← same instance</span></li>
+          <li><span class="dot"></span><span class="group-label">Reads</span></li>
+          <li><span class="dot"></span>events (query)</li>
+          <li><span class="dot"></span>alerts</li>
+          <li><span class="dot"></span>users · roles</li>
+          <li><span class="dot"></span>connectors</li>
+          <li><span class="dot"></span>custom_rules</li>
+          <li><span class="dot"></span>geo_cache</li>
+          <li><span class="dot"></span><span class="group-label">Writes</span></li>
+          <li><span class="dot"></span>sessions (create/delete)</li>
+          <li><span class="dot"></span>users (CRUD)</li>
+          <li><span class="dot"></span>connectors (CRUD)</li>
+          <li><span class="dot"></span>custom_rules (CRUD)</li>
+          <li><span class="dot"></span>reset_tokens</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ FOOTER / TECH STACK ══════════════════════════════════════════ -->
+  <div class="footer">
+    <span class="footer-label">Tech Stack</span>
+    <span class="badge">C++20</span>
+    <span class="badge">cpp-httplib</span>
+    <span class="badge">nlohmann/json</span>
+    <span class="badge">yaml-cpp</span>
+    <span class="badge">libpq</span>
+    <span class="badge">spdlog</span>
+    <span class="badge">OpenSSL</span>
+    <span class="badge">React 18</span>
+    <span class="badge">Vite</span>
+    <span class="badge">PostgreSQL 15+</span>
+    <span class="badge">systemd</span>
+    <span class="badge">Linux x86-64</span>
+  </div>
+
+</div>
+</body>
+</html>

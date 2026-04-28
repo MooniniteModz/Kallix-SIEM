@@ -82,7 +82,8 @@ bool PostgresStorageEngine::update_custom_rule(const CustomRuleRecord& r) {
         en.c_str(), ua.c_str()
     };
     PGresult* result = PQexecParams(conn_, sql, 14, nullptr, params, nullptr, nullptr, 0);
-    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK;
+    bool ok = PQresultStatus(result) == PGRES_COMMAND_OK &&
+              std::string(PQcmdTuples(result)) != "0";
     PQclear(result);
     return ok;
 }

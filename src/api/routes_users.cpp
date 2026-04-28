@@ -1,5 +1,4 @@
 // ApiServer — User management routes (admin-only CRUD)
-// Split from server.cpp for maintainability
 
 #include "api/server.h"
 #include "common/utils.h"
@@ -9,24 +8,10 @@
 
 namespace outpost {
 
-static std::string extract_bearer_users(const httplib::Request& req) {
-    auto it = req.headers.find("Authorization");
-    if (it == req.headers.end()) return "";
-    const auto& val = it->second;
-    if (val.substr(0, 7) == "Bearer ") return val.substr(7);
-    return "";
-}
-
 void ApiServer::register_user_routes() {
 
     server_.Get("/api/users", [this](const httplib::Request& req, httplib::Response& res) {
-        auto token = extract_bearer_users(req);
-        auto session = storage_.validate_session(token);
-        if (!session || session->role != "admin") {
-            res.status = 403;
-            res.set_content(R"({"error":"Admin access required"})", "application/json");
-            return;
-        }
+        if (!require_admin(req, res)) return;
         auto users = storage_.list_users();
         nlohmann::json arr = nlohmann::json::array();
         for (auto& u : users) {
@@ -39,13 +24,7 @@ void ApiServer::register_user_routes() {
     });
 
     server_.Post("/api/users", [this](const httplib::Request& req, httplib::Response& res) {
-        auto token = extract_bearer_users(req);
-        auto session = storage_.validate_session(token);
-        if (!session || session->role != "admin") {
-            res.status = 403;
-            res.set_content(R"({"error":"Admin access required"})", "application/json");
-            return;
-        }
+        if (!require_admin(req, res)) return;
         try {
             auto body = nlohmann::json::parse(req.body);
             std::string username = body.value("username", "");
@@ -63,7 +42,6 @@ void ApiServer::register_user_routes() {
                 res.set_content(R"({"error":"Username or email exceeds maximum length"})", "application/json");
                 return;
             }
-            // Validate role is one of the allowed values
             if (role != "admin" && role != "analyst" && role != "viewer") {
                 res.status = 400;
                 res.set_content(R"({"error":"Role must be one of: admin, analyst, viewer"})", "application/json");
@@ -103,18 +81,11 @@ void ApiServer::register_user_routes() {
     });
 
     server_.Put("/api/users", [this](const httplib::Request& req, httplib::Response& res) {
-        auto token = extract_bearer_users(req);
-        auto session = storage_.validate_session(token);
-        if (!session || session->role != "admin") {
-            res.status = 403;
-            res.set_content(R"({"error":"Admin access required"})", "application/json");
-            return;
-        }
+        if (!require_admin(req, res)) return;
         try {
             auto body = nlohmann::json::parse(req.body);
-            std::string user_id = body.value("user_id", "");
-            std::string email   = body.value("email", "");
-            std::string role    = body.value("role", "");
+            std::string user_id  = body.value("user_id", "");
+            std::string email    = body.value("email", "");
             std::string password = body.value("password", "");
 
             if (user_id.empty()) {
@@ -123,7 +94,8 @@ void ApiServer::register_user_routes() {
                 return;
             }
 
-            if (!role.empty()) {
+            if (body.contains("role")) {
+                std::string role = body["role"].get<std::string>();
                 if (role != "admin" && role != "analyst" && role != "viewer") {
                     res.status = 400;
                     res.set_content(R"({"error":"Role must be one of: admin, analyst, viewer"})", "application/json");
@@ -150,9 +122,9 @@ void ApiServer::register_user_routes() {
     });
 
     server_.Delete("/api/users", [this](const httplib::Request& req, httplib::Response& res) {
-        auto token = extract_bearer_users(req);
-        auto session = storage_.validate_session(token);
-        if (!session || session->role != "admin") {
+        auto session = require_auth(req, res);
+        if (!session) return;
+        if (session->role != "admin") {
             res.status = 403;
             res.set_content(R"({"error":"Admin access required"})", "application/json");
             return;
@@ -162,7 +134,9 @@ void ApiServer::register_user_routes() {
             try {
                 auto body = nlohmann::json::parse(req.body);
                 user_id = body.value("user_id", "");
-            } catch (...) {}
+            } catch (const std::exception& e) {
+                LOG_WARN("DELETE /api/users: failed to parse body: {}", e.what());
+            }
         }
         if (user_id.empty()) {
             res.status = 400;

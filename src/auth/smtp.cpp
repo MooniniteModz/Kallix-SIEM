@@ -109,7 +109,7 @@ bool send_email(const SmtpConfig& cfg,
         return false;
     }
 
-    // ── SSL wrapper (SMTPS) ──────────────────────────────────────────────────
+    // ── SSL wrapper (SMTPS) ─────────────────────────────────────────────
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
     SSL_CTX* ssl_ctx = nullptr;
     SSL*     ssl_con = nullptr;
@@ -159,7 +159,9 @@ bool send_email(const SmtpConfig& cfg,
         return read_response(sock);
     };
     if (cfg.use_ssl) {
-        LOG_WARN("SMTP: use_ssl=true but built without OpenSSL — using plaintext");
+        LOG_ERROR("SMTP: use_ssl=true but built without OpenSSL support — refusing to send credentials over plaintext");
+        ::close(sock);
+        return false;
     }
 #endif
 
@@ -181,7 +183,7 @@ bool send_email(const SmtpConfig& cfg,
         if (response_code(greeting) != 220) break;
 
         // EHLO
-        smtp_write("EHLO outpost.local\r\n");
+        smtp_write("EHLO " + cfg.ehlo_hostname + "\r\n");
         auto ehlo_resp = smtp_read();
         bool has_auth = (ehlo_resp.find("AUTH") != std::string::npos);
 
@@ -208,7 +210,7 @@ bool send_email(const SmtpConfig& cfg,
         auto data_resp = smtp_read();
         if (response_code(data_resp) != 354) break;
 
-        std::string display_name = cfg.from_name.empty() ? "Firewatch SIEM" : cfg.from_name;
+        std::string display_name = cfg.from_name.empty() ? "Kallix SIEM" : cfg.from_name;
         std::ostringstream msg;
         msg << "From: " << display_name << " <" << cfg.from << ">\r\n"
             << "To: <" << to << ">\r\n"

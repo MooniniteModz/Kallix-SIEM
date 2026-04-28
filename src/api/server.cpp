@@ -58,34 +58,9 @@ void ApiServer::stop() {
     LOG_INFO("API server stopped");
 }
 
-// ── Helper: extract session token from Bearer header OR HttpOnly cookie ──
-static std::string get_session_token(const httplib::Request& req) {
-    // 1. Bearer Authorization header — API clients, scripts, non-browser callers
-    auto it = req.headers.find("Authorization");
-    if (it != req.headers.end()) {
-        const auto& val = it->second;
-        if (val.size() > 7 && val.substr(0, 7) == "Bearer ") return val.substr(7);
-    }
-    // 2. HttpOnly session cookie — browser sessions (not accessible via JS)
-    const auto& cookie_hdr = req.get_header_value("Cookie");
-    if (!cookie_hdr.empty()) {
-        std::istringstream ss(cookie_hdr);
-        std::string seg;
-        while (std::getline(ss, seg, ';')) {
-            auto s = seg.find_first_not_of(' ');
-            if (s == std::string::npos) continue;
-            seg = seg.substr(s);
-            auto eq = seg.find('=');
-            if (eq == std::string::npos) continue;
-            if (seg.substr(0, eq) == "kallix_session") return seg.substr(eq + 1);
-        }
-    }
-    return "";
-}
-
 std::optional<PostgresStorageEngine::SessionInfo>
 ApiServer::require_auth(const httplib::Request& req, httplib::Response& res) {
-    auto token = get_session_token(req);
+    auto token = extract_session_token(req);
     auto session = storage_.validate_session(token);
     if (!session) {
         res.status = 401;
@@ -119,8 +94,7 @@ void ApiServer::setup_routes() {
         res.set_header("X-Frame-Options",          "DENY");
         res.set_header("X-XSS-Protection",         "1; mode=block");
         res.set_header("Referrer-Policy",          "strict-origin-when-cross-origin");
-        res.set_header("Content-Security-Policy",
-            "default-src 'none'; frame-ancestors 'none'");
+        res.set_header("Content-Security-Policy", "frame-ancestors 'none'");
         res.set_header("Permissions-Policy",       "geolocation=(), camera=(), microphone=()");
 
         // ── CORS ─────────────────────────────────────────────────────

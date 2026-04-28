@@ -17,6 +17,7 @@
 #include <atomic>
 #include <chrono>
 #include <csignal>
+#include <filesystem>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -151,8 +152,8 @@ int main(int argc, char* argv[]) {
 
     
     LOG_INFO("╔═══════════════════════════════════════════╗");
-    LOG_INFO("║         OUTPOST SIEM v0.1.0               ║");
-    LOG_INFO("║          A work in progress               ║");
+    LOG_INFO("║           Kallix SIEM v0.1.0              ║");
+    LOG_INFO("║           A work in progress              ║");
     LOG_INFO("╚═══════════════════════════════════════════╝");
     LOG_INFO("============================================================================================");
     LOG_INFO("I would rather have questions that can't be answered than answers that can't be questioned.");
@@ -253,14 +254,14 @@ int main(int argc, char* argv[]) {
 
     // Rule engine
     RuleEngine rule_engine(storage);
-    rule_engine.load_rules("./config/rules");
+    rule_engine.load_rules((std::filesystem::path(config_path).parent_path() / "rules").string());
 
     // Auth config
     AuthConfig auth_config;
     auto auth_node = config["auth"];
     if (auth_node) {
         auth_config.default_admin_user = auth_node["default_admin_user"] ? auth_node["default_admin_user"].as<std::string>() : "admin";
-        auth_config.default_admin_pass = auth_node["default_admin_pass"] ? auth_node["default_admin_pass"].as<std::string>() : "outpost";
+        auth_config.default_admin_pass = auth_node["default_admin_pass"] ? auth_node["default_admin_pass"].as<std::string>() : "";
         auth_config.session_ttl_hours  = auth_node["session_ttl_hours"]  ? auth_node["session_ttl_hours"].as<int>()          : 24;
     }
 
@@ -324,9 +325,10 @@ int main(int argc, char* argv[]) {
         smtp_config.username  = smtp_node["username"]   ? smtp_node["username"].as<std::string>()  : "";
         smtp_config.password  = smtp_node["password"]   ? smtp_node["password"].as<std::string>()  : "";
         smtp_config.from      = smtp_node["from"]       ? smtp_node["from"].as<std::string>()      : "noreply@outpost.local";
-        smtp_config.from_name = smtp_node["from_name"]  ? smtp_node["from_name"].as<std::string>() : "Firewatch SIEM";
-        smtp_config.use_ssl   = smtp_node["use_ssl"]    ? smtp_node["use_ssl"].as<bool>()          : false;
-        smtp_config.base_url  = smtp_node["base_url"]   ? smtp_node["base_url"].as<std::string>()  : "";
+        smtp_config.from_name     = smtp_node["from_name"]     ? smtp_node["from_name"].as<std::string>()     : "Kallix SIEM";
+        smtp_config.ehlo_hostname = smtp_node["ehlo_hostname"] ? smtp_node["ehlo_hostname"].as<std::string>() : "kallix.local";
+        smtp_config.use_ssl       = smtp_node["use_ssl"]       ? smtp_node["use_ssl"].as<bool>()              : false;
+        smtp_config.base_url      = smtp_node["base_url"]      ? smtp_node["base_url"].as<std::string>()      : "";
     }
     // Environment variable overrides for SMTP secrets
     if (const char* v = std::getenv("KALLIX_SMTP_PASSWORD")) smtp_config.password = v;

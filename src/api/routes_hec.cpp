@@ -120,20 +120,19 @@ void ApiServer::register_hec_routes() {
     auto hec_handler = [this](const httplib::Request& req, httplib::Response& res) {
         res.set_header("Content-Type", "application/json");
 
-        // Token validation
-        if (!config_.hec_token.empty()) {
-            std::string token = extract_hec_token(req);
-            if (token.empty()) {
-                hec_error(res, 401, 2, "Token is required");
-                return;
-            }
-            if (token != config_.hec_token) {
-                hec_error(res, 403, 4, "Invalid token");
-                return;
-            }
-        } else {
-            LOG_WARN("HEC: no token configured — accepting unauthenticated events. "
-                     "Set hec.token in outpost.yaml to secure this endpoint.");
+        // Token validation — always required
+        if (config_.hec_token.empty()) {
+            hec_error(res, 503, 9, "HEC endpoint not configured — set hec.token in outpost.yaml");
+            return;
+        }
+        std::string token = extract_hec_token(req);
+        if (token.empty()) {
+            hec_error(res, 401, 2, "Token is required");
+            return;
+        }
+        if (token != config_.hec_token) {
+            hec_error(res, 403, 4, "Invalid token");
+            return;
         }
 
         if (req.body.empty()) {

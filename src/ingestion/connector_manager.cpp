@@ -1,10 +1,41 @@
 #include "ingestion/connector_manager.h"
+#include "common/logger.h"
 
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
 
 namespace outpost {
+
+// Block RFC1918, loopback, link-local, and metadata service ranges
+static bool is_ssrf_blocked(const std::string& host) {
+    // Strip port if present
+    std::string h = host;
+    auto colon = h.rfind(':');
+    if (colon != std::string::npos) h = h.substr(0, colon);
+
+    // Exact loopback / localhost
+    if (h == "localhost" || h == "127.0.0.1" || h == "::1") return true;
+
+    // Simple prefix checks for private/reserved ranges
+    auto starts = [&](const std::string& prefix) {
+        return h.substr(0, prefix.size()) == prefix;
+    };
+
+    if (starts("10."))          return true;   // RFC1918 class A
+    if (starts("192.168."))     return true;   // RFC1918 class C
+    if (starts("172.16.")  || starts("172.17.") || starts("172.18.") ||
+        starts("172.19.")  || starts("172.20.") || starts("172.21.") ||
+        starts("172.22.")  || starts("172.23.") || starts("172.24.") ||
+        starts("172.25.")  || starts("172.26.") || starts("172.27.") ||
+        starts("172.28.")  || starts("172.29.") || starts("172.30.") ||
+        starts("172.31."))     return true;    // RFC1918 class B
+    if (starts("169.254."))    return true;    // link-local / AWS IMDS
+    if (starts("100.64."))     return true;    // CGNAT shared space
+    if (starts("0."))          return true;    // this-network
+
+    return false;
+}
 
 // ════════════════════════════════════════════════════════════════
 // URL PARSING
@@ -156,6 +187,10 @@ std::pair<int, nlohmann::json> ApiPollerInstance::authenticated_get(
 
     std::string scheme, host, path;
     if (!parse_url(url, scheme, host, path)) {
+        return {0, nullptr};
+    }
+    if (is_ssrf_blocked(host)) {
+        LOG_WARN("Connector URL blocked (private/reserved address): {}", url);
         return {0, nullptr};
     }
 

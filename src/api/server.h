@@ -17,9 +17,9 @@ namespace outpost {
 struct ApiConfig {
     std::string bind_address   = "0.0.0.0";
     uint16_t    port           = 8080;
-    std::string cors_origin    = "*";
-    std::string hec_token;     // HEC auth token; if empty, endpoint warns but accepts all
-    bool        secure_cookies = false;  // set true in production (HTTPS); adds Secure flag to session cookie
+    std::string cors_origin    = "";    // must be set explicitly; empty blocks credentialed CORS
+    std::string hec_token;
+    bool        secure_cookies = true;  // requires HTTPS; set false only for local HTTP dev
 };
 
 class ApiServer {

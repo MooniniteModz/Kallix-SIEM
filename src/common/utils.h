@@ -5,8 +5,36 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <httplib.h>
 
 namespace outpost {
+
+/// Extract a named cookie value from a request's Cookie header
+inline std::string get_cookie(const httplib::Request& req, const std::string& name) {
+    const auto& hdr = req.get_header_value("Cookie");
+    if (hdr.empty()) return "";
+    std::istringstream ss(hdr);
+    std::string seg;
+    while (std::getline(ss, seg, ';')) {
+        auto s = seg.find_first_not_of(' ');
+        if (s == std::string::npos) continue;
+        seg = seg.substr(s);
+        auto eq = seg.find('=');
+        if (eq == std::string::npos) continue;
+        if (seg.substr(0, eq) == name) return seg.substr(eq + 1);
+    }
+    return "";
+}
+
+/// Extract session token from Bearer Authorization header OR kallix_session cookie
+inline std::string extract_session_token(const httplib::Request& req) {
+    auto it = req.headers.find("Authorization");
+    if (it != req.headers.end()) {
+        const auto& val = it->second;
+        if (val.size() > 7 && val.substr(0, 7) == "Bearer ") return val.substr(7);
+    }
+    return get_cookie(req, "kallix_session");
+}
 
 /// Get current time and set as epoch milliseconds
 inline int64_t now_ms() {

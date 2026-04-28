@@ -523,8 +523,8 @@ Event PostgresStorageEngine::result_to_event(PGresult* result, int row) {
     if (!meta.empty()) {
         try {
             e.metadata = nlohmann::json::parse(meta);
-        } catch (...) {
-            // Ignore JSON parse errors
+        } catch (const std::exception& ex) {
+            LOG_DEBUG("Event metadata JSON parse failed: {}", ex.what());
         }
     }
 
@@ -556,12 +556,12 @@ std::vector<std::pair<std::string, int64_t>> PostgresStorageEngine::count_by_fie
         return results;
     }
 
-    // Build SQL (field name is NOT a parameter, it's part of the query structure)
+    // Field name is whitelisted above — safe to interpolate into query structure
     std::string sql = "SELECT " + field + ", COUNT(*) as cnt FROM events "
                       "WHERE " + field + " IS NOT NULL AND " + field + " != '' "
                       "GROUP BY " + field + " ORDER BY cnt DESC;";
 
-    PGresult* result = PQexec(conn_, sql.c_str());
+    PGresult* result = PQexecParams(conn_, sql.c_str(), 0, nullptr, nullptr, nullptr, nullptr, 0);
 
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         LOG_ERROR("count_by_field query failed: {}", PQerrorMessage(conn_));
@@ -602,11 +602,12 @@ std::vector<std::pair<std::string, int64_t>> PostgresStorageEngine::top_values(
         return results;
     }
 
+    std::string limit_str = std::to_string(limit);
     std::string sql = "SELECT " + field + ", COUNT(*) as cnt FROM events "
                       "WHERE " + field + " IS NOT NULL AND " + field + " != '' "
-                      "GROUP BY " + field + " ORDER BY cnt DESC LIMIT " + std::to_string(limit) + ";";
-
-    PGresult* result = PQexec(conn_, sql.c_str());
+                      "GROUP BY " + field + " ORDER BY cnt DESC LIMIT $1;";
+    const char* params[1] = { limit_str.c_str() };
+    PGresult* result = PQexecParams(conn_, sql.c_str(), 1, nullptr, params, nullptr, nullptr, 0);
 
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         LOG_ERROR("top_values query failed: {}", PQerrorMessage(conn_));
@@ -640,12 +641,11 @@ std::vector<std::pair<int64_t, int64_t>> PostgresStorageEngine::event_timeline(i
     std::string start_str = std::to_string(start);
     std::string bucket_str = std::to_string(bucket_ms);
 
-    std::string sql = "SELECT (timestamp / " + bucket_str + ") * " + bucket_str +
-                      " as bucket, COUNT(*) as cnt "
-                      "FROM events WHERE timestamp >= " + start_str + " "
+    const char* sql = "SELECT (timestamp / $1) * $1 as bucket, COUNT(*) as cnt "
+                      "FROM events WHERE timestamp >= $2 "
                       "GROUP BY bucket ORDER BY bucket ASC;";
-
-    PGresult* result = PQexec(conn_, sql.c_str());
+    const char* params[2] = { bucket_str.c_str(), start_str.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 2, nullptr, params, nullptr, nullptr, 0);
 
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         LOG_ERROR("event_timeline query failed: {}", PQerrorMessage(conn_));

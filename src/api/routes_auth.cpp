@@ -14,33 +14,6 @@
 
 namespace outpost {
 
-// Parse a named value from the Cookie header
-static std::string get_cookie_value(const httplib::Request& req, const std::string& name) {
-    const auto& hdr = req.get_header_value("Cookie");
-    if (hdr.empty()) return "";
-    std::istringstream ss(hdr);
-    std::string seg;
-    while (std::getline(ss, seg, ';')) {
-        auto s = seg.find_first_not_of(' ');
-        if (s == std::string::npos) continue;
-        seg = seg.substr(s);
-        auto eq = seg.find('=');
-        if (eq == std::string::npos) continue;
-        if (seg.substr(0, eq) == name) return seg.substr(eq + 1);
-    }
-    return "";
-}
-
-// Extract session token from Bearer header OR HttpOnly cookie
-static std::string extract_session_token(const httplib::Request& req) {
-    auto it = req.headers.find("Authorization");
-    if (it != req.headers.end()) {
-        const auto& val = it->second;
-        if (val.size() > 7 && val.substr(0, 7) == "Bearer ") return val.substr(7);
-    }
-    return get_cookie_value(req, "kallix_session");
-}
-
 // Build a Set-Cookie header value for the session token
 static std::string build_session_cookie(const std::string& token, int64_t ttl_hours, bool secure) {
     std::string c = "kallix_session=" + token
@@ -69,24 +42,22 @@ static std::map<std::string, LoginAttempt> login_attempts;
 static bool is_rate_limited(const std::string& key, const AuthConfig& config) {
     std::lock_guard<std::mutex> lock(rate_mutex);
     int64_t now = now_ms();
-    auto& attempt = login_attempts[key];
 
-    // If locked out, check if lockout has expired
-    if (attempt.locked_until > 0 && now < attempt.locked_until) {
-        return true;
-    }
-
-    // Reset if lockout expired or window expired
+    // Evict entries whose lockout and window have both expired to cap map size
     int64_t window_ms = static_cast<int64_t>(config.login_window_sec) * 1000;
-    if (attempt.locked_until > 0 && now >= attempt.locked_until) {
-        attempt = {};
-        return false;
-    }
-    if (attempt.first_attempt > 0 && (now - attempt.first_attempt) > window_ms) {
-        attempt = {};
-        return false;
+    for (auto it = login_attempts.begin(); it != login_attempts.end(); ) {
+        auto& a = it->second;
+        bool expired = (a.locked_until > 0 && now >= a.locked_until) ||
+                       (a.locked_until == 0 && a.first_attempt > 0 &&
+                        (now - a.first_attempt) > window_ms);
+        it = expired ? login_attempts.erase(it) : ++it;
     }
 
+    auto it = login_attempts.find(key);
+    if (it == login_attempts.end()) return false;
+    auto& attempt = it->second;
+
+    if (attempt.locked_until > 0 && now < attempt.locked_until) return true;
     return false;
 }
 
@@ -124,9 +95,15 @@ void ApiServer::register_auth_routes() {
                 res.set_content(R"({"error":"Username and password required"})", "application/json");
                 return;
             }
+            if (username.size() > 255 || password.size() > 1024) {
+                res.status = 400;
+                res.set_content(R"({"error":"Credential exceeds maximum length"})", "application/json");
+                return;
+            }
 
-            // Rate limiting by username
-            if (is_rate_limited(username, auth_config_)) {
+            // Rate limiting keyed on IP+username to block both credential stuffing and single-account brute-force
+            std::string rate_key = req.remote_addr + ":" + username;
+            if (is_rate_limited(rate_key, auth_config_)) {
                 res.status = 429;
                 res.set_content(R"({"error":"Too many login attempts. Please try again later."})", "application/json");
                 return;
@@ -134,13 +111,13 @@ void ApiServer::register_auth_routes() {
 
             auto user = storage_.get_user_by_email(username);
             if (!user || !verify_password(password, user->salt, user->password_hash)) {
-                record_failed_login(username, auth_config_);
+                record_failed_login(rate_key, auth_config_);
                 res.status = 401;
                 res.set_content(R"({"error":"Invalid username or password"})", "application/json");
                 return;
             }
 
-            record_successful_login(username);
+            record_successful_login(rate_key);
 
             auto token = generate_session_token();
             int64_t now = now_ms();
@@ -230,7 +207,11 @@ void ApiServer::register_auth_routes() {
                 "-- Kallix SIEM";
 
             send_email(smtp_config_, email, "Kallix SIEM — Password Reset", body_text);
-        } catch (...) {}
+        } catch (const std::exception& e) {
+            LOG_WARN("forgot-password handler error: {}", e.what());
+        } catch (...) {
+            LOG_WARN("forgot-password handler: unknown error");
+        }
 
         res.set_content(ok_msg, "application/json");
     });
@@ -239,8 +220,17 @@ void ApiServer::register_auth_routes() {
     server_.Post("/api/auth/reset-password", [this](const httplib::Request& req, httplib::Response& res) {
         try {
             auto body = nlohmann::json::parse(req.body);
-            std::string token       = body.value("token", "");
+            std::string token        = body.value("token", "");
             std::string new_password = body.value("new_password", "");
+
+            // Rate-limit by token to prevent brute-force guessing
+            std::string rate_key = "reset_consume:" + token.substr(0, 16);
+            if (is_rate_limited(rate_key, auth_config_)) {
+                res.status = 429;
+                res.set_content(R"({"error":"Too many attempts. Please request a new reset link."})", "application/json");
+                return;
+            }
+            record_failed_login(rate_key, auth_config_);
 
             if (token.empty() || new_password.empty()) {
                 res.status = 400;

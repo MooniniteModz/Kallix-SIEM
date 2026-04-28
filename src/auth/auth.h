@@ -7,9 +7,8 @@ namespace outpost {
 
 struct AuthConfig {
     std::string default_admin_user = "admin";
-    std::string default_admin_pass = "outpost";
+    std::string default_admin_pass = "";    // must be set via KALLIX_ADMIN_PASS env var
     int         session_ttl_hours  = 24;
-    std::string cors_origin        = "*";   // restrict in production
     int         min_password_length = 12;
     bool        require_uppercase   = true;
     bool        require_lowercase   = true;

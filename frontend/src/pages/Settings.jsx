@@ -146,7 +146,7 @@ function UserManagement() {
             <div className="field">
               <label>{editUser ? 'New Password (leave blank to keep current)' : 'Password'}</label>
               <input type="password" value={formPassword} onChange={e => setFormPassword(e.target.value)}
-                     placeholder={editUser ? 'Leave blank to keep current' : 'Min 4 characters'} />
+                     placeholder={editUser ? 'Leave blank to keep current' : 'Min 12 characters'} />
             </div>
             <div className="field">
               <label>Role</label>

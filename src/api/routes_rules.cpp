@@ -6,13 +6,18 @@
 #include "rules/rule.h"
 
 #include <nlohmann/json.hpp>
+#include <filesystem>
 
 namespace outpost {
 
 void ApiServer::register_rule_routes() {
 
-    server_.Get("/api/rules", [this](const httplib::Request&, httplib::Response& res) {
-        auto yaml_rules = load_rules_from_directory("./config/rules");
+    // Derive rules directory from the config file path (e.g. ./config/outpost.yaml → ./config/rules)
+    namespace fs = std::filesystem;
+    std::string rules_dir = (fs::path(config_path_).parent_path() / "rules").string();
+
+    server_.Get("/api/rules", [this, rules_dir](const httplib::Request&, httplib::Response& res) {
+        auto yaml_rules = load_rules_from_directory(rules_dir);
         nlohmann::json result = nlohmann::json::array();
         for (const auto& r : yaml_rules) {
             nlohmann::json j = {
@@ -51,7 +56,7 @@ void ApiServer::register_rule_routes() {
         res.set_content(nlohmann::json({{"count", result.size()}, {"rules", result}}).dump(), "application/json");
     });
 
-    server_.Post("/api/rules", [this](const httplib::Request& req, httplib::Response& res) {
+    server_.Post("/api/rules", [this, rules_dir](const httplib::Request& req, httplib::Response& res) {
         if (!require_admin(req, res)) return;
         try {
             auto body = nlohmann::json::parse(req.body);
@@ -87,7 +92,7 @@ void ApiServer::register_rule_routes() {
                 return;
             }
 
-            rule_engine_.reload_rules("./config/rules");
+            rule_engine_.reload_rules(rules_dir);
 
             nlohmann::json result = {{"id", r.id}, {"status", "created"}};
             res.set_content(result.dump(), "application/json");
@@ -126,7 +131,11 @@ void ApiServer::register_rule_routes() {
             if (body.contains("tags")) r.tags_json = body["tags"].dump();
             else r.tags_json = "[]";
 
-            storage_.update_custom_rule(r);
+            if (!storage_.update_custom_rule(r)) {
+                res.status = 404;
+                res.set_content(R"({"error":"Rule not found"})", "application/json");
+                return;
+            }
             res.set_content(R"({"status":"ok"})", "application/json");
         } catch (const std::exception& e) {
             res.status = 400;

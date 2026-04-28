@@ -158,10 +158,17 @@ prompt API_PORT            "API port"                         "8080"
 prompt FRONTEND_PORT       "Frontend port (nginx)"            "3000"
 prompt PG_DB               "PostgreSQL database name"         "kallix"
 prompt PG_USER             "PostgreSQL user"                  "kallix"
-prompt PG_PASS             "PostgreSQL password"              "" "true"
-while [[ -z "$PG_PASS" ]]; do
-  warn "PostgreSQL password cannot be empty."
-  prompt PG_PASS "PostgreSQL password" "" "true"
+prompt PG_PASS             "PostgreSQL password (min 8 chars)" "" "true"
+while [[ -z "$PG_PASS" ]] || [[ ${#PG_PASS} -lt 8 ]]; do
+  [[ -z "$PG_PASS" ]] && warn "PostgreSQL password cannot be empty." \
+                       || warn "PostgreSQL password must be at least 8 characters."
+  prompt PG_PASS "PostgreSQL password (min 8 chars)" "" "true"
+done
+prompt PG_PASS_CONFIRM     "Confirm PostgreSQL password"      "" "true"
+while [[ "$PG_PASS" != "$PG_PASS_CONFIRM" ]]; do
+  warn "Passwords do not match. Try again."
+  prompt PG_PASS         "PostgreSQL password (min 8 chars)" "" "true"
+  prompt PG_PASS_CONFIRM "Confirm PostgreSQL password"       "" "true"
 done
 
 echo ""
@@ -271,6 +278,12 @@ section "Configuring PostgreSQL"
 
 run_quietly "Starting PostgreSQL service" \
   systemctl enable --now postgresql
+
+# Set postgres superuser password so peer auth isn't required for local tools
+step "Setting postgres superuser password"
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '${PG_PASS}';" \
+  >> /tmp/kallix_pg.log 2>&1
+ok "postgres superuser password set"
 
 # Create DB user + database
 step "Creating database user and database"

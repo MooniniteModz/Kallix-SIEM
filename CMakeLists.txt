@@ -82,7 +82,6 @@ add_library(outpost_lib STATIC
     src/storage/postgres_rules.cpp
     src/storage/postgres_connectors.cpp
     src/storage/postgres_geo.cpp
-    src/storage/retention.cpp
     src/rules/rule.cpp
     src/rules/rule_engine.cpp
     src/api/server.cpp

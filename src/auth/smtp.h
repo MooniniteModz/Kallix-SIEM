@@ -9,10 +9,11 @@ struct SmtpConfig {
     std::string username;
     std::string password;
     std::string from          = "noreply@outpost.local";
-    std::string from_name     = "Firewatch SIEM";
+    std::string from_name     = "Kallix SIEM";
+    std::string ehlo_hostname = "kallix.local";  // sent in SMTP EHLO command
     bool        use_ssl       = false;  // SMTPS (port 465); false = plaintext (port 25/587)
     bool        enabled       = false;
-    std::string base_url;               // e.g. "http://firewatch.example.com" for email links
+    std::string base_url;               // e.g. "https://kallix.cloud" for email links
 };
 
 /// Send a plain-text email via SMTP.

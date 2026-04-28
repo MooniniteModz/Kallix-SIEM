@@ -66,6 +66,7 @@ void ApiServer::register_alert_routes() {
     server_.Get("/api/alerts", [this](const httplib::Request& req, httplib::Response& res) {
         int limit = 100;
         if (req.has_param("limit")) { try { limit = std::stoi(req.get_param_value("limit")); } catch (...) {} }
+        if (limit < 1 || limit > 1000) limit = 100;
         auto alerts = storage_.get_alerts(limit);
         nlohmann::json result = nlohmann::json::array();
         for (const auto& a : alerts) {

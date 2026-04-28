@@ -409,6 +409,7 @@ void ApiServer::register_connector_routes() {
     });
 
     server_.Post("/api/connectors/test", [this](const httplib::Request& req, httplib::Response& res) {
+        if (!require_admin(req, res)) return;
         try {
             auto body = nlohmann::json::parse(req.body);
             auto settings = body.value("settings", nlohmann::json::object());

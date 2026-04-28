@@ -49,11 +49,12 @@ std::vector<Alert> PostgresStorageEngine::get_alerts(int limit) {
 
     if (!conn_) return results;
 
-    std::string sql = "SELECT alert_id, rule_id, rule_name, severity, description, "
+    const char* sql = "SELECT alert_id, rule_id, rule_name, severity, description, "
                       "event_ids, created_at, acknowledged "
-                      "FROM alerts ORDER BY created_at DESC LIMIT " + std::to_string(limit) + ";";
-
-    PGresult* result = PQexec(conn_, sql.c_str());
+                      "FROM alerts ORDER BY created_at DESC LIMIT $1;";
+    std::string limit_str = std::to_string(limit);
+    const char* params[1] = { limit_str.c_str() };
+    PGresult* result = PQexecParams(conn_, sql, 1, nullptr, params, nullptr, nullptr, 0);
 
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         LOG_ERROR("get_alerts failed: {}", PQerrorMessage(conn_));
@@ -85,7 +86,9 @@ std::vector<Alert> PostgresStorageEngine::get_alerts(int limit) {
                         a.event_ids.push_back(id.get<std::string>());
                     }
                 }
-            } catch (...) {}
+            } catch (const std::exception& ex) {
+                LOG_DEBUG("Alert event_ids JSON parse failed: {}", ex.what());
+            }
         }
 
         a.created_at   = std::stoll(col_text(i, 6));
