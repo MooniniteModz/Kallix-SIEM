@@ -177,6 +177,25 @@ bool PostgresStorageEngine::init() {
             user_id    TEXT NOT NULL,
             expires_at BIGINT NOT NULL
         );
+
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret             TEXT    DEFAULT '';
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled             BOOLEAN DEFAULT FALSE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes            TEXT    DEFAULT '[]';
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS force_password_change   BOOLEAN DEFAULT FALSE;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name              TEXT    DEFAULT '';
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name               TEXT    DEFAULT '';
+
+        CREATE TABLE IF NOT EXISTS pending_mfa (
+            token      TEXT PRIMARY KEY,
+            user_id    TEXT NOT NULL,
+            expires_at BIGINT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS pending_password_change (
+            token      TEXT PRIMARY KEY,
+            user_id    TEXT NOT NULL,
+            expires_at BIGINT NOT NULL
+        );
     )";
 
     PGresult* result = PQexec(conn_, create_tables_sql);

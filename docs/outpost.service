@@ -1,0 +1,33 @@
+[Unit]
+Description=Kallix SIEM (outpost)
+Documentation=https://kallix.cloud
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=moon
+Group=moon
+WorkingDirectory=/home/moon/repo/outpost
+
+# Secrets — edit this file if keys change
+EnvironmentFile=/etc/kallix/secrets.env
+
+ExecStart=/home/moon/repo/outpost/build/outpost /home/moon/repo/outpost/config/outpost.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart on crash, but not on clean exit (code 0)
+Restart=on-failure
+RestartSec=5
+
+# Log to journald (read with: journalctl -u outpost -f)
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=outpost
+
+# Basic hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

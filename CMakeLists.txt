@@ -64,6 +64,7 @@ add_library(outpost_lib STATIC
     src/common/event.cpp
     src/common/logger.cpp
     src/common/utils.cpp
+    src/common/geo_lookup.cpp
     src/ingestion/syslog_listener.cpp
     src/ingestion/ring_buffer.cpp
     src/ingestion/http_poller.cpp
@@ -94,6 +95,7 @@ add_library(outpost_lib STATIC
     src/api/routes_hec.cpp
     src/auth/auth.cpp
     src/auth/smtp.cpp
+    src/auth/totp.cpp
     src/storage/postgres_reset.cpp
 )
 
@@ -105,6 +107,7 @@ target_link_libraries(outpost_lib PUBLIC
     httplib::httplib
     libpq_wrapper
     pthread
+    maxminddb
 )
 
 if(OPENSSL_FOUND)

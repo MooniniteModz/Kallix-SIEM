@@ -23,4 +23,12 @@ bool send_email(const SmtpConfig& cfg,
                 const std::string& subject,
                 const std::string& body_text);
 
+/// Send a multipart/alternative email (plain text + HTML).
+/// Email clients will display the HTML version when supported, falling back to plain text.
+bool send_email_html(const SmtpConfig& cfg,
+                     const std::string& to,
+                     const std::string& subject,
+                     const std::string& body_text,
+                     const std::string& body_html);
+
 } // namespace outpost

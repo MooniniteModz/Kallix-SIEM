@@ -116,4 +116,35 @@ std::string validate_password_policy(const std::string& password, const AuthConf
     return "";  // empty = passes policy
 }
 
+std::string generate_temp_password() {
+    // Build a password that always meets policy: upper + lower + digit + special + random fill
+    static const char uppers[]  = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    static const char lowers[]  = "abcdefghjkmnpqrstuvwxyz";
+    static const char digits[]  = "23456789";
+    static const char specials[] = "!@#$%";
+    static const char pool[]    = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
+
+    unsigned char buf[16];
+    RAND_bytes(buf, sizeof(buf));
+
+    std::string pw;
+    pw += uppers [buf[0]  % (sizeof(uppers)  - 1)];
+    pw += uppers [buf[1]  % (sizeof(uppers)  - 1)];
+    pw += lowers [buf[2]  % (sizeof(lowers)  - 1)];
+    pw += lowers [buf[3]  % (sizeof(lowers)  - 1)];
+    pw += digits [buf[4]  % (sizeof(digits)  - 1)];
+    pw += digits [buf[5]  % (sizeof(digits)  - 1)];
+    pw += specials[buf[6] % (sizeof(specials) - 1)];
+    for (int i = 7; i < 15; i++)
+        pw += pool[buf[i] % (sizeof(pool) - 1)];
+
+    // Shuffle using Fisher-Yates with random bytes
+    unsigned char shuf[15];
+    RAND_bytes(shuf, sizeof(shuf));
+    for (int i = static_cast<int>(pw.size()) - 1; i > 0; i--)
+        std::swap(pw[i], pw[shuf[i] % (i + 1)]);
+
+    return pw;
+}
+
 } // namespace outpost

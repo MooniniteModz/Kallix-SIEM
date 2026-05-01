@@ -113,15 +113,17 @@ void ApiServer::setup_routes() {
         res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
         if (req.method == "OPTIONS") return httplib::Server::HandlerResponse::Unhandled;
-        if (req.path == "/api/auth/login")           return httplib::Server::HandlerResponse::Unhandled;
+        if (req.path == "/api/auth/login")            return httplib::Server::HandlerResponse::Unhandled;
+        if (req.path == "/api/auth/mfa/challenge")   return httplib::Server::HandlerResponse::Unhandled;
         if (req.path == "/api/auth/forgot-password") return httplib::Server::HandlerResponse::Unhandled;
         if (req.path == "/api/auth/reset-password")  return httplib::Server::HandlerResponse::Unhandled;
+        if (req.path == "/api/auth/set-password")    return httplib::Server::HandlerResponse::Unhandled;
         // HEC uses its own token auth — exempt from session auth middleware
         if (req.path.substr(0, 8) == "/api/hec")        return httplib::Server::HandlerResponse::Unhandled;
         if (req.path.substr(0, 9) == "/services")       return httplib::Server::HandlerResponse::Unhandled;
         if (req.path.substr(0, 4) != "/api") return httplib::Server::HandlerResponse::Unhandled;
 
-        auto token = get_session_token(req);
+        auto token = extract_session_token(req);
         if (token.empty()) {
             res.status = 401;
             res.set_content(R"({"error":"Authentication required"})", "application/json");

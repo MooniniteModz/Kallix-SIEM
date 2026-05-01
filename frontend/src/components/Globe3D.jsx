@@ -171,8 +171,8 @@ export default function Globe3D() {
   // Fetch world + US boundaries
   useEffect(() => {
     Promise.all([
-      fetch('https://unpkg.com/world-atlas@2.0.2/countries-110m.json').then(r => r.json()),
-      fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json').then(r => r.json()),
+      fetch('/countries-110m.json').then(r => r.json()),
+      fetch('/states-10m.json').then(r => r.json()),
     ])
       .then(([worldTopo, usTopo]) => {
         const worldGeo = feature(worldTopo, worldTopo.objects.countries);
@@ -196,7 +196,7 @@ export default function Globe3D() {
       }
     }
     load();
-    const interval = setInterval(load, 30000);
+    const interval = setInterval(load, 5000);
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
@@ -592,9 +592,9 @@ export default function Globe3D() {
             globeMaterial={globeMaterial}
 
             polygonsData={countries}
-            polygonCapColor={() => 'rgba(10, 20, 40, 0.6)'}
-            polygonSideColor={() => 'rgba(20, 40, 80, 0.2)'}
-            polygonStrokeColor={() => '#1a3a5c'}
+            polygonCapColor={() => 'rgba(0, 0, 0, 0)'}
+            polygonSideColor={() => 'rgba(0, 0, 0, 0)'}
+            polygonStrokeColor={() => 'rgba(50, 120, 220, 0.7)'}
             polygonAltitude={0.005}
             polygonLabel={() => null}
 

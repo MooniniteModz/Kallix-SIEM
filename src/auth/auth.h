@@ -40,4 +40,7 @@ std::string sha256_hex(const std::string& input);
 /// or a human-readable error describing what's wrong.
 std::string validate_password_policy(const std::string& password, const AuthConfig& config);
 
+/// Generate a random temporary password that satisfies the default policy
+std::string generate_temp_password();
+
 } // namespace outpost

@@ -1,5 +1,6 @@
 #include "common/logger.h"
 #include "common/utils.h"
+#include "common/geo_lookup.h"
 #include "ingestion/ring_buffer.h"
 #include "ingestion/syslog_listener.h"
 #include "ingestion/http_poller.h"
@@ -69,7 +70,8 @@ Event make_hinted_event(const RawMessage& msg, SourceType source_type) {
 void parser_worker(RingBuffer<>& buffer, PostgresStorageEngine& storage,
                    RuleEngine& rule_engine,
                    std::vector<std::unique_ptr<Parser>>& parsers,
-                   std::atomic<uint64_t>& parsed_count) {
+                   std::atomic<uint64_t>& parsed_count,
+                   const GeoLookup& geo) {
     while (g_running.load(std::memory_order_relaxed)) {
         auto msg = buffer.try_pop();
         if (!msg) {
@@ -87,7 +89,7 @@ void parser_worker(RingBuffer<>& buffer, PostgresStorageEngine& storage,
         for (auto& parser : parsers) {
             auto event = parser->parse(*msg);
             if (event) {
-                // If the event has no geo data, check for connector-injected fallback location
+                // Geo enrichment: connector fallback → GeoIP src_ip lookup
                 if (!event->metadata.contains("latitude") || !event->metadata.contains("longitude")) {
                     if (event->metadata.contains("_connector_latitude") &&
                         event->metadata.contains("_connector_longitude")) {
@@ -97,6 +99,16 @@ void parser_worker(RingBuffer<>& buffer, PostgresStorageEngine& storage,
                             event->metadata["city"] = event->metadata["_connector_city"];
                         }
                         if (!event->metadata.contains("geo_type")) {
+                            event->metadata["geo_type"] = "event";
+                        }
+                    } else if (!event->src_ip.empty()) {
+                        if (auto loc = geo.lookup(event->src_ip)) {
+                            event->metadata["latitude"]  = loc->latitude;
+                            event->metadata["longitude"] = loc->longitude;
+                            if (!loc->city.empty())
+                                event->metadata["city"] = loc->city;
+                            if (!loc->country.empty())
+                                event->metadata["country"] = loc->country;
                             event->metadata["geo_type"] = "event";
                         }
                     }
@@ -276,16 +288,17 @@ int main(int argc, char* argv[]) {
         }
         auto salt = generate_salt();
         auto hash = hash_password(auth_config.default_admin_pass, salt);
-        storage.create_user(generate_uuid(), auth_config.default_admin_user, "admin@kallix.local", hash, salt, "admin");
+        storage.create_user(generate_uuid(), auth_config.default_admin_user, "admin@kallix.local", "Admin", "User", hash, salt, "admin");
         LOG_WARN("Default admin account created (user: {}). Change the password immediately!",
                  auth_config.default_admin_user);
     }
 
     // API server
     ApiConfig api_config;
-    api_config.port = 8080;
-    // CORS origin: env var > YAML > default "*"
     auto api_node = config["api"];
+    if (api_node && api_node["port"])         api_config.port         = api_node["port"].as<int>();
+    if (api_node && api_node["bind_address"]) api_config.bind_address = api_node["bind_address"].as<std::string>();
+    // CORS origin: env var > YAML > default "*"
     if (api_node && api_node["cors_origin"]) {
         api_config.cors_origin = api_node["cors_origin"].as<std::string>();
     }
@@ -341,6 +354,16 @@ int main(int argc, char* argv[]) {
 
     ApiServer api(storage, buffer, poller, rule_engine, connector_mgr, config_path, auth_config, api_config, smtp_config);
 
+    // GeoIP — optional; gracefully skipped if the MMDB file is absent
+    GeoLookup geo;
+    {
+        std::string mmdb_path = (std::filesystem::path(config_path).parent_path() / "GeoLite2-City.mmdb").string();
+        if (!geo.open(mmdb_path)) {
+            LOG_WARN("GeoIP: '{}' not found — IP-to-location enrichment disabled.", mmdb_path);
+            LOG_WARN("GeoIP: Download GeoLite2-City.mmdb from maxmind.com and place it in config/");
+        }
+    }
+
     // ── Start everything ──
     listener.start();
     poller.start();
@@ -355,7 +378,8 @@ int main(int argc, char* argv[]) {
         parser_threads.emplace_back(parser_worker,
             std::ref(buffer), std::ref(storage),
             std::ref(rule_engine),
-            std::ref(parsers), std::ref(parsed_count));
+            std::ref(parsers), std::ref(parsed_count),
+            std::cref(geo));
     }
 
     // Flush thread (every 1 second)

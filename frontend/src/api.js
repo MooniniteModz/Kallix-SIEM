@@ -65,6 +65,25 @@ export const api = {
   },
   logout:         () => postJson('/auth/logout', {}),
   me:             () => fetchJson('/auth/me'),
+
+  mfaChallenge: async (mfa_token, code, backup_code) => {
+    const res = await fetch(`${BASE}/auth/mfa/challenge`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mfa_token, ...(backup_code ? { backup_code } : { code }) }),
+    });
+    if (!res.ok) {
+      let msg = `API error: ${res.status}`;
+      try { const b = await res.json(); if (b.error) msg = b.error; } catch {}
+      throw new Error(msg);
+    }
+    return res.json();
+  },
+  mfaStatus:      () => fetchJson('/auth/mfa/status'),
+  mfaSetup:       () => fetchJson('/auth/mfa/setup'),
+  mfaEnable:      (code) => postJson('/auth/mfa/enable', { code }),
+  mfaDisable:     (password) => postJson('/auth/mfa/disable', { password }),
   forgotPassword: async (email) => {
     const res = await fetch(`${BASE}/auth/forgot-password`, {
       method: 'POST',
@@ -85,6 +104,20 @@ export const api = {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, new_password }),
+    });
+    if (!res.ok) {
+      let msg = `API error: ${res.status}`;
+      try { const b = await res.json(); if (b.error) msg = b.error; } catch {}
+      throw new Error(msg);
+    }
+    return res.json();
+  },
+  setPassword: async (change_token, new_password) => {
+    const res = await fetch(`${BASE}/auth/set-password`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ change_token, new_password }),
     });
     if (!res.ok) {
       let msg = `API error: ${res.status}`;
@@ -153,8 +186,11 @@ export const api = {
   testConnector:   (settings) => postJson('/connectors/test', { settings }),
 
   // User management
-  listUsers:  () => fetchJson('/users'),
-  createUser: (data) => postJson('/users', data),
-  updateUser: (data) => putJson('/users', data),
-  deleteUser: (user_id) => deleteJson('/users', { user_id }),
+  listUsers:      () => fetchJson('/users'),
+  createUser:     (data) => postJson('/users', data),
+  updateUser:     (data) => putJson('/users', data),
+  deleteUser:     (user_id) => deleteJson('/users', { user_id }),
+  forceLogoff:    (user_id) => postJson('/users/force-logoff',   { user_id }),
+  forceMfaReset:  (user_id) => postJson('/users/force-mfa-reset', { user_id }),
+  sendAdminReset: (user_id) => postJson('/users/send-reset',      { user_id }),
 };

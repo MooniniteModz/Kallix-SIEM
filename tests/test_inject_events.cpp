@@ -321,7 +321,7 @@ int main(int argc, char* argv[]) {
     pg_config.port     = std::getenv("PGPORT")     ? std::atoi(std::getenv("PGPORT")) : 5432;
     pg_config.dbname   = std::getenv("PGDATABASE") ? std::getenv("PGDATABASE") : "outpost";
     pg_config.user     = std::getenv("PGUSER")     ? std::getenv("PGUSER")     : "postgres";
-    pg_config.password = std::getenv("PGPASSWORD") ? std::getenv("PGPASSWORD") : "s00ners!";
+    pg_config.password = std::getenv("PGPASSWORD") ? std::getenv("PGPASSWORD") : "";
     pg_config.batch_size = 100;
 
     PostgresStorageEngine storage(pg_config);

@@ -12,3 +12,11 @@ config/outpost.yaml
 config/*.secret.*
 *.env
 .env*
+
+# Large binary assets — use Git LFS or a CDN instead
+frontend/public/earth-night.jpg
+frontend/public/Images/
+
+# Generated / build artifacts that may appear in public/
+frontend/public/countries-110m.json
+frontend/public/states-10m.json

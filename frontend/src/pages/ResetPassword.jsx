@@ -27,8 +27,8 @@ export default function ResetPassword() {
       setError('Passwords do not match.');
       return;
     }
-    if (newPassword.length < 4) {
-      setError('Password must be at least 4 characters.');
+    if (newPassword.length < 12) {
+      setError('Password must be at least 12 characters.');
       return;
     }
 
@@ -50,7 +50,7 @@ export default function ResetPassword() {
             <div className="login-brand-icon" style={{ color: 'var(--green)' }}>
               <CheckCircle size={44} />
             </div>
-            <h1 className="login-brand-name">Password Updated</h1>
+            <h1 className="login-screen-title">Password Updated</h1>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24, textAlign: 'center', lineHeight: 1.6 }}>
             Your password has been reset. You can now sign in with your new password.
@@ -70,7 +70,7 @@ export default function ResetPassword() {
           <div className="login-brand-icon">
             <img src="/Images/kallix-icon-animated-transparent.gif" alt="Kallix" />
           </div>
-          <h1 className="login-brand-name">Set New Password</h1>
+          <h1 className="login-screen-title">Set New Password</h1>
         </div>
 
         {!token && (

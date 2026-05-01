@@ -92,12 +92,14 @@ static int response_code(const std::string& r) {
     try { return std::stoi(r.substr(0, 3)); } catch (...) { return 0; }
 }
 
-// ── Main entry point ─────────────────────────────────────────────────────────
+// ── Core SMTP send (internal) ─────────────────────────────────────────────────
+// body_html is empty for plain-text-only messages.
 
-bool send_email(const SmtpConfig& cfg,
-                const std::string& to,
-                const std::string& subject,
-                const std::string& body_text) {
+static bool smtp_send(const SmtpConfig& cfg,
+                      const std::string& to,
+                      const std::string& subject,
+                      const std::string& body_text,
+                      const std::string& body_html) {
     if (!cfg.enabled || cfg.host.empty() || to.empty()) {
         LOG_DEBUG("SMTP: skipped (not configured)");
         return false;
@@ -109,7 +111,6 @@ bool send_email(const SmtpConfig& cfg,
         return false;
     }
 
-    // ── SSL wrapper (SMTPS) ─────────────────────────────────────────────
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
     SSL_CTX* ssl_ctx = nullptr;
     SSL*     ssl_con = nullptr;
@@ -118,31 +119,42 @@ bool send_email(const SmtpConfig& cfg,
         SSL_write(ssl_con, s.c_str(), static_cast<int>(s.size()));
     };
     auto ssl_read = [&]() -> std::string {
+        std::string out;
         char buf[4096]{};
-        int n = SSL_read(ssl_con, buf, sizeof(buf) - 1);
-        return (n > 0) ? std::string(buf, n) : std::string{};
+        while (true) {
+            int n = SSL_read(ssl_con, buf, sizeof(buf) - 1);
+            if (n <= 0) break;
+            buf[n] = '\0';
+            out += buf;
+            auto pos = out.rfind('\n');
+            size_t ls = (pos == std::string::npos || pos == 0)
+                            ? 0
+                            : out.rfind('\n', pos - 1) + 1;
+            if (out.size() > ls + 3 && out[ls + 3] == ' ') break;
+            if (pos == std::string::npos && out.size() >= 4 && out[3] == ' ') break;
+        }
+        return out;
     };
 
     if (cfg.use_ssl) {
         SSL_library_init();
         ssl_ctx = SSL_CTX_new(TLS_client_method());
-        if (!ssl_ctx) {
-            ::close(sock);
-            LOG_ERROR("SMTP: SSL_CTX_new failed");
-            return false;
-        }
+        if (!ssl_ctx) { ::close(sock); LOG_ERROR("SMTP: SSL_CTX_new failed"); return false; }
         SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, nullptr);
+        SSL_CTX_set_default_verify_paths(ssl_ctx);
         ssl_con = SSL_new(ssl_ctx);
         SSL_set_fd(ssl_con, sock);
+        SSL_set_tlsext_host_name(ssl_con, cfg.host.c_str());
         if (SSL_connect(ssl_con) != 1) {
-            SSL_free(ssl_con); SSL_CTX_free(ssl_ctx);
-            ::close(sock);
-            LOG_ERROR("SMTP: SSL handshake failed");
+            unsigned long ec = ERR_get_error();
+            char eb[256]{};
+            ERR_error_string_n(ec, eb, sizeof(eb));
+            SSL_free(ssl_con); SSL_CTX_free(ssl_ctx); ::close(sock);
+            LOG_ERROR("SMTP: SSL handshake failed: {}", eb);
             return false;
         }
     }
 
-    // Unified read/write lambdas
     auto smtp_write = [&](const std::string& s) {
         if (cfg.use_ssl) ssl_write(s);
         else ::send(sock, s.c_str(), s.size(), 0);
@@ -155,11 +167,9 @@ bool send_email(const SmtpConfig& cfg,
     auto smtp_write = [&](const std::string& s) {
         ::send(sock, s.c_str(), s.size(), 0);
     };
-    auto smtp_read = [&]() -> std::string {
-        return read_response(sock);
-    };
+    auto smtp_read = [&]() -> std::string { return read_response(sock); };
     if (cfg.use_ssl) {
-        LOG_ERROR("SMTP: use_ssl=true but built without OpenSSL support — refusing to send credentials over plaintext");
+        LOG_ERROR("SMTP: use_ssl=true but built without OpenSSL");
         ::close(sock);
         return false;
     }
@@ -169,8 +179,7 @@ bool send_email(const SmtpConfig& cfg,
         smtp_write(cmd + "\r\n");
         auto r = smtp_read();
         if (response_code(r) != expected) {
-            LOG_WARN("SMTP: '{}' got unexpected response: {}", cmd.substr(0, 20),
-                     r.substr(0, std::min(r.size(), size_t(80))));
+            LOG_WARN("SMTP: '{}' got: {}", cmd.substr(0, 20), r.substr(0, std::min(r.size(), size_t(80))));
             return false;
         }
         return true;
@@ -178,54 +187,58 @@ bool send_email(const SmtpConfig& cfg,
 
     bool ok = false;
     do {
-        // Greeting
-        auto greeting = smtp_read();
-        if (response_code(greeting) != 220) break;
+        if (response_code(smtp_read()) != 220) break;
 
-        // EHLO
         smtp_write("EHLO " + cfg.ehlo_hostname + "\r\n");
         auto ehlo_resp = smtp_read();
-        bool has_auth = (ehlo_resp.find("AUTH") != std::string::npos);
 
-        // AUTH LOGIN (only if credentials provided and server supports it)
-        if (!cfg.username.empty() && has_auth) {
+        if (!cfg.username.empty() && ehlo_resp.find("AUTH") != std::string::npos) {
             if (!check(334, "AUTH LOGIN")) break;
             if (!check(334, b64_encode(cfg.username))) break;
             smtp_write(b64_encode(cfg.password) + "\r\n");
             auto auth_resp = smtp_read();
             if (response_code(auth_resp) != 235) {
-                LOG_WARN("SMTP: AUTH LOGIN failed: {}",
-                         auth_resp.substr(0, std::min(auth_resp.size(), size_t(80))));
-                // Fall through — some relays don't need auth
+                LOG_WARN("SMTP: AUTH LOGIN failed: {}", auth_resp.substr(0, 80));
             }
         }
 
-        // Envelope
-        std::string from_addr = cfg.from;
-        if (!check(250, "MAIL FROM:<" + from_addr + ">")) break;
+        if (!check(250, "MAIL FROM:<" + cfg.from + ">")) break;
         if (!check(250, "RCPT TO:<" + to + ">")) break;
 
-        // Message
         smtp_write("DATA\r\n");
-        auto data_resp = smtp_read();
-        if (response_code(data_resp) != 354) break;
+        if (response_code(smtp_read()) != 354) break;
 
         std::string display_name = cfg.from_name.empty() ? "Kallix SIEM" : cfg.from_name;
         std::ostringstream msg;
         msg << "From: " << display_name << " <" << cfg.from << ">\r\n"
             << "To: <" << to << ">\r\n"
             << "Subject: " << subject << "\r\n"
-            << "MIME-Version: 1.0\r\n"
-            << "Content-Type: text/plain; charset=UTF-8\r\n"
-            << "\r\n"
-            << body_text << "\r\n"
-            << ".\r\n";
+            << "MIME-Version: 1.0\r\n";
+
+        if (body_html.empty()) {
+            msg << "Content-Type: text/plain; charset=UTF-8\r\n"
+                << "\r\n"
+                << body_text << "\r\n";
+        } else {
+            // multipart/alternative — clients pick the best version they support
+            static const std::string boundary = "kallix_mime_boundary_v1";
+            msg << "Content-Type: multipart/alternative; boundary=\"" << boundary << "\"\r\n"
+                << "\r\n"
+                << "--" << boundary << "\r\n"
+                << "Content-Type: text/plain; charset=UTF-8\r\n\r\n"
+                << body_text << "\r\n\r\n"
+                << "--" << boundary << "\r\n"
+                << "Content-Type: text/html; charset=UTF-8\r\n\r\n"
+                << body_html << "\r\n\r\n"
+                << "--" << boundary << "--\r\n";
+        }
+        msg << ".\r\n";
         smtp_write(msg.str());
 
         auto send_resp = smtp_read();
+        LOG_DEBUG("SMTP DATA response: {}", send_resp.substr(0, std::min(send_resp.size(), size_t(120))));
         if (response_code(send_resp) / 100 != 2) {
-            LOG_WARN("SMTP: DATA send failed: {}",
-                     send_resp.substr(0, std::min(send_resp.size(), size_t(80))));
+            LOG_WARN("SMTP: DATA failed: {}", send_resp.substr(0, 80));
             break;
         }
 
@@ -238,9 +251,23 @@ bool send_email(const SmtpConfig& cfg,
     if (ssl_ctx) SSL_CTX_free(ssl_ctx);
 #endif
     ::close(sock);
-
-    if (ok) LOG_INFO("SMTP: password reset email sent to {}", to);
+    if (ok) LOG_INFO("SMTP: email sent to {}", to);
     return ok;
+}
+
+bool send_email(const SmtpConfig& cfg,
+                const std::string& to,
+                const std::string& subject,
+                const std::string& body_text) {
+    return smtp_send(cfg, to, subject, body_text, "");
+}
+
+bool send_email_html(const SmtpConfig& cfg,
+                     const std::string& to,
+                     const std::string& subject,
+                     const std::string& body_text,
+                     const std::string& body_html) {
+    return smtp_send(cfg, to, subject, body_text, body_html);
 }
 
 } // namespace outpost

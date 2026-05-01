@@ -84,18 +84,47 @@ public:
     // ── Auth methods ──
     bool create_user(const std::string& user_id, const std::string& username,
                      const std::string& email,
+                     const std::string& first_name, const std::string& last_name,
                      const std::string& password_hash, const std::string& salt,
                      const std::string& role);
-    bool update_user(const std::string& user_id, const std::string& email, const std::string& role);
+    bool update_user(const std::string& user_id, const std::string& email, const std::string& role,
+                     const std::string& first_name = "", const std::string& last_name = "");
     bool update_user_password(const std::string& user_id,
                               const std::string& password_hash, const std::string& salt);
     bool delete_user(const std::string& user_id);
 
-    struct UserRecord { std::string user_id, username, email, password_hash, salt, role; int64_t created_at = 0; };
+    struct UserRecord {
+        std::string user_id, username, email, password_hash, salt, role;
+        std::string first_name, last_name;
+        int64_t     created_at            = 0;
+        bool        mfa_enabled           = false;
+        bool        force_password_change = false;
+        std::string totp_secret;
+        std::string backup_codes; // JSON array of SHA-256 hashes
+    };
     std::optional<UserRecord> get_user_by_username(const std::string& username);
     std::optional<UserRecord> get_user_by_email(const std::string& email);
     std::vector<UserRecord> list_users();
     int user_count();
+
+    // MFA
+    bool set_user_totp(const std::string& user_id, const std::string& secret);
+    bool enable_user_mfa(const std::string& user_id, const std::string& backup_codes_json);
+    bool disable_user_mfa(const std::string& user_id);
+    bool update_backup_codes(const std::string& user_id, const std::string& backup_codes_json);
+
+    bool set_force_password_change(const std::string& user_id, bool value);
+
+    // Admin actions
+    bool admin_force_logoff(const std::string& user_id);   // alias for delete_sessions_for_user
+    bool admin_force_mfa_reset(const std::string& user_id); // clears TOTP so next login forces re-setup
+
+    bool create_pending_mfa(const std::string& token, const std::string& user_id, int64_t expires_at);
+    std::optional<std::string> peek_pending_mfa(const std::string& token);    // read without deleting
+    std::optional<std::string> consume_pending_mfa(const std::string& token); // read + delete
+
+    bool create_pending_change(const std::string& token, const std::string& user_id, int64_t expires_at);
+    std::optional<std::string> consume_pending_change(const std::string& token);
 
     bool create_session(const std::string& token, const std::string& user_id,
                         int64_t created_at, int64_t expires_at);

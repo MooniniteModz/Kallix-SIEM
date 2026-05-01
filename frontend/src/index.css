@@ -1127,6 +1127,19 @@ tbody tr.clickable:hover { background: var(--bg-active); }
   animation: loginTextSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
 }
 
+/* Variant for screen headings that are too long for the logo treatment */
+.login-screen-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  text-transform: none;
+  font-family: var(--font-sans, inherit);
+  text-align: center;
+  margin: 0;
+  animation: loginTextSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+}
+
 @keyframes loginCardIn {
   0%   { opacity: 0; transform: translateY(24px) scale(0.97); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
