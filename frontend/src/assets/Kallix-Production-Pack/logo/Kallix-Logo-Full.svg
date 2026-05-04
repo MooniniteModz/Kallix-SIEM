@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+
+
+<g transform="translate(45,30) scale(.85)">
+    
+    <defs>
+      <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="5" result="blur"/>
+        <feFlood flood-color="#00E5D4" flood-opacity="0.9"/>
+        <feComposite in2="blur" operator="in"/>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <linearGradient id="grad" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#00E5D4"/>
+        <stop offset="100%" stop-color="#008A86"/>
+      </linearGradient>
+    </defs>
+    
+    <g filter="url(#glow)" fill="url(#grad)">
+      <polygon points="74,22 112,0 112,106 74,128"/>
+      <polygon points="130,59 236,59 111,188 77,188"/>
+      <polygon points="143,153 237,256 174,256 112,189"/>
+      <polygon points="88,211 121,246 88,246"/>
+    </g>
+    </g>
+<text x="256" y="352" fill="#F7FAFF" font-family="Arial, Helvetica, sans-serif" font-size="66" font-weight="700" letter-spacing="22" text-anchor="middle">KALLIX</text>
+<text x="256" y="404" fill="#00E5D4" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="7" text-anchor="middle">THREAT INTELLIGENCE PLATFORM</text>
+
+</svg>
